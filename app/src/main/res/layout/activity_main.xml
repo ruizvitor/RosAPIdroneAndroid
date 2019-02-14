@@ -26,35 +26,22 @@
             android:layout_height="wrap_content"
             android:text="Capture"
             android:textSize="12sp"/>
-
-        <ToggleButton
-            android:id="@+id/btn_record"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Start Record"
-            android:textOff="Start Record"
-            android:textOn="Stop Record"
-            android:layout_weight="1"
-            android:layout_gravity="center_vertical"
-            android:textSize="12dp"
-            android:checked="false" />
-
         <Button
-            android:id="@+id/btn_shoot_photo_mode"
+            android:id="@+id/btn_download"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:text="Shoot Photo Mode"
+            android:text="Download All"
             android:textSize="12sp"/>
-
         <Button
-            android:id="@+id/btn_record_video_mode"
+            android:id="@+id/btn_delete"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="Record Video Mode"
             android:layout_weight="1"
-            android:layout_gravity="center_vertical" />
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:text="Delete All"
+            android:textSize="12sp"/>
 
     </LinearLayout>
 
