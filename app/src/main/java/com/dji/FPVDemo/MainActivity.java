@@ -352,6 +352,11 @@ public class MainActivity extends Activity implements SurfaceTextureListener,OnC
 			case R.id.btn_capture:{
 //				switchCameraMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO);
 				captureAction();
+
+//				Intent intent = new Intent(this, MainActivity.class);
+//                Intent intent = new Intent(this, RosHelloWorldApp.class);
+//				startActivity(intent);
+
 				break;
 			}
 			case R.id.btn_download:{
