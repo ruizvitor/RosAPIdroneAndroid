@@ -61,4 +61,17 @@
         android:textColor="@color/colorBlack"
         android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
+
+    <Button
+        android:id="@+id/btn_rosjava_open"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_below="@+id/textView2"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="50dp"
+        android:layout_marginEnd="127dp"
+        android:background="@drawable/round_btn"
+        android:text="ROSJAVA"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
 </RelativeLayout>

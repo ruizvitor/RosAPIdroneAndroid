@@ -39,6 +39,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private TextView mTextProduct;
     private TextView mVersionTv;
     private Button mBtnOpen;
+    private Button mBtnRosJavaOpen;
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -207,6 +208,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnOpen = (Button) findViewById(R.id.btn_open);
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
+
+        mBtnRosJavaOpen = (Button) findViewById(R.id.btn_rosjava_open);
+        mBtnRosJavaOpen.setOnClickListener(this);
+        mBtnRosJavaOpen.setEnabled(true);
+
         mVersionTv = (TextView) findViewById(R.id.textView2);
         mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
     }
@@ -253,6 +259,13 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             case R.id.btn_open: {
                 Intent intent = new Intent(this, MainActivity.class);
 //                Intent intent = new Intent(this, RosHelloWorldApp.class);
+                startActivity(intent);
+                break;
+            }
+
+            case R.id.btn_rosjava_open: {
+//                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(this, RosHelloWorldApp.class);
                 startActivity(intent);
                 break;
             }
