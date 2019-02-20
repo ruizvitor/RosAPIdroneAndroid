@@ -682,6 +682,9 @@ public class MainActivity extends Activity implements SurfaceTextureListener,OnC
 			{
 				// HideDownloadProgressDialog();
 				setResultToToast("Download File Success" + ":" + filePath);
+
+				//PUBLISH FILE in a topic
+
 				currentProgress = -1;
 			}
 		});

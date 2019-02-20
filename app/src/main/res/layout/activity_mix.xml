@@ -1,0 +1,56 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+
+    <Button
+        android:id="@+id/btn_rosjava"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="56dp"
+        android:background="@drawable/round_btn"
+        android:text="ROSJAVA"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
+    <Button
+        android:id="@+id/btn_capture"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="140dp"
+        android:background="@drawable/round_btn"
+        android:text="CAPTURE"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
+    <Button
+        android:id="@+id/btn_download"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="278dp"
+        android:background="@drawable/round_btn"
+        android:text="DOWNLOAD ALL"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
+
+    <Button
+        android:id="@+id/btn_delete"
+        android:layout_width="150dp"
+        android:layout_height="55dp"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="392dp"
+        android:background="@drawable/round_btn"
+        android:text="DELETE ALL"
+        android:textColor="@color/colorWhite"
+        android:textSize="20dp" />
+
+
+
+
+</RelativeLayout>
