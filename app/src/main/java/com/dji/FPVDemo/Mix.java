@@ -37,7 +37,7 @@ public class Mix extends RosActivity implements OnClickListener {
         START ROS CONFIG
      */
     public Mix() {
-        this("RosDrone", "RosDrone", URI.create("http://192.168.1.20:11311/"));//phantom wifi
+        this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//phantom wifi
         //this("RosDrone", "RosDrone", URI.create("http://192.168.1.104:11311/"));//dinf3
     }
 

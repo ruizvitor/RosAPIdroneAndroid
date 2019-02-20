@@ -3,22 +3,27 @@ package com.dji.FPVDemo;
 import android.os.Environment;
 
 import org.apache.commons.logging.Log;
-import org.ros.concurrent.CancellableLoop;
+import org.ros.exception.RosRuntimeException;
 import org.ros.message.MessageListener;
+import org.ros.message.Time;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.Node;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeMain;
 import org.ros.node.topic.Publisher;
 import org.ros.node.topic.Subscriber;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.common.base.Preconditions;
+
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
 
 import dji.common.camera.SettingsDefinitions;
 import dji.common.error.DJICameraError;
@@ -32,22 +37,22 @@ import dji.sdk.media.MediaFile;
 import dji.sdk.media.MediaManager;
 import std_msgs.String;
 
-//import org.ros.android.BitmapFromCompressedImage;
-//
-//import java.io.IOException;
-//
-//import cv_bridge.CvImage;
-//import sensor_msgs.Image;
-//
-//
-//import org.opencv.android.BaseLoaderCallback;
-//import org.opencv.android.LoaderCallbackInterface;
-//import org.opencv.android.OpenCVLoader;
-//import org.opencv.core.Core;
-//import org.opencv.core.Point;
-//import org.opencv.core.Scalar;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
-//import org.ros.android.BitmapFromCompressedImage;
+import com.google.common.base.Preconditions;
+
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
+import android.hardware.Camera.Size;
+
+import org.jboss.netty.buffer.ChannelBufferOutputStream;
+import org.ros.internal.message.MessageBuffers;
+import org.ros.message.Time;
+import org.ros.namespace.NameResolver;
+import org.ros.node.ConnectedNode;
+import org.ros.node.topic.Publisher;
 
 //{
 //    private RosImageView<sensor_msgs.CompressedImage> image;
@@ -62,6 +67,8 @@ import std_msgs.String;
 public class TalkerListener extends AbstractNodeMain {
     private static final java.lang.String TAG = TalkerListener.class.getName();
 
+    ConnectedNode mynode;
+
     //BEGIN MediaManager
     private List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
     private MediaManager mMediaManager;
@@ -71,7 +78,7 @@ public class TalkerListener extends AbstractNodeMain {
     //END MediaManager
 
     Publisher<std_msgs.String> publisher;
-//    Publisher<sensor_msgs.CompressedImage> publisherImg;
+    Publisher<sensor_msgs.CompressedImage> publisherImg;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -81,6 +88,7 @@ public class TalkerListener extends AbstractNodeMain {
     @Override
     public void onStart(ConnectedNode connectedNode) {
 
+        mynode = connectedNode;
 
         final Log log = connectedNode.getLog();
         Subscriber<std_msgs.String> subscriber = connectedNode.newSubscriber("chatter", std_msgs.String._TYPE);
@@ -88,7 +96,7 @@ public class TalkerListener extends AbstractNodeMain {
 
         publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
 
-//        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
+        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -104,6 +112,9 @@ public class TalkerListener extends AbstractNodeMain {
                     initMediaManager(1);
                 } else if (message.getData().equals("delete")) {
                     initMediaManager(0);
+                } else if (message.getData().equals("send")) {
+                    pubMessage(publisher, "Attempting to publish image " + destDir + "/DJI_0001.jpg" + " from android");
+                    pubImg(publisherImg, destDir + "/DJI_0001.jpg");
                 }
 
             }
@@ -121,16 +132,40 @@ public class TalkerListener extends AbstractNodeMain {
         publisher.publish(str);
     }
 
-//    void pubImg(Publisher<sensor_msgs.CompressedImage> publisherImg, java.lang.String msg) {
-////        BitmapFromCompressedImage bitmap = new BitmapFromCompressedImage();
-////        publisherImg.publish(bitmap);
-//
-//        try {
-//            publisherImg.publish(cvImage.toImageMsg(publisherImg.newMessage()));
-//        } catch (IOException e) {
-//            android.util.Log.d(TAG, "cv_bridge exception: " + e.getMessage());
-//        }
-//    }
+    void pubImg(Publisher<sensor_msgs.CompressedImage> publisherImg, java.lang.String path) {
+
+        ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());
+
+        Bitmap bmp = BitmapFactory.decodeFile(path);
+
+        if(bmp == null){
+            android.util.Log.d(TAG, "FILE FAILED NULL!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+
+        //Compressed image
+
+        sensor_msgs.CompressedImage image = publisherImg.newMessage();
+
+        image.setFormat("jpeg");
+        image.getHeader().setStamp(mynode.getCurrentTime());
+        image.getHeader().setFrameId("camera");
+
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+
+
+        stream.buffer().writeBytes(baos.toByteArray());
+
+
+        image.setData(stream.buffer().copy());
+
+
+        stream.buffer().clear();
+        android.util.Log.d(TAG,"pre publish");
+        publisherImg.publish(image);
+        android.util.Log.d(TAG,"after publish");
+    }
 
 
     private void switchCameraModeAndCapture(SettingsDefinitions.CameraMode cameraMode) {
