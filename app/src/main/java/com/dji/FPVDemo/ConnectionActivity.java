@@ -39,7 +39,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private TextView mTextProduct;
     private TextView mVersionTv;
     private Button mBtnOpen;
-    private Button mBtnRosJavaOpen;
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -115,7 +114,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         if (missingPermission.isEmpty()) {
             startSDKRegistration();
         } else {
-            showToast("Missing permissions!!!");
+//            showToast("Missing permissions!!!");
         }
     }
 
@@ -124,16 +123,16 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-                    showToast( "registering, pls wait...");
+//                    showToast("registering, pls wait...");
                     DJISDKManager.getInstance().registerApp(getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                         @Override
                         public void onRegister(DJIError djiError) {
                             if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                                 DJILog.e("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
-                                showToast("Register Success");
+//                                showToast("Register Success");
                             } else {
-                                showToast( "Register sdk fails, check network is available");
+//                                showToast("Register sdk fails, check network is available");
                             }
                             Log.v(TAG, djiError.getDescription());
                         }
@@ -141,15 +140,17 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                         @Override
                         public void onProductDisconnect() {
                             Log.d(TAG, "onProductDisconnect");
-                            showToast("Product Disconnected");
+//                            showToast("Product Disconnected");
 
                         }
+
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
                             Log.d(TAG, String.format("onProductConnect newProduct:%s", baseProduct));
-                            showToast("Product Connected");
+//                            showToast("Product Connected");
 
                         }
+
                         @Override
                         public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
                                                       BaseComponent newComponent) {
@@ -209,9 +210,6 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         mBtnOpen.setOnClickListener(this);
         mBtnOpen.setEnabled(false);
 
-        mBtnRosJavaOpen = (Button) findViewById(R.id.btn_rosjava_open);
-        mBtnRosJavaOpen.setOnClickListener(this);
-        mBtnRosJavaOpen.setEnabled(true);
 
         mVersionTv = (TextView) findViewById(R.id.textView2);
         mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
@@ -257,16 +255,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
-//                Intent intent = new Intent(this, MainActivity.class);
                 Intent intent = new Intent(this, Mix.class);
-//                Intent intent = new Intent(this, RosHelloWorldApp.class);
-                startActivity(intent);
-                break;
-            }
-
-            case R.id.btn_rosjava_open: {
-//                Intent intent = new Intent(this, MainActivity.class);
-                Intent intent = new Intent(this, RosHelloWorldApp.class);
                 startActivity(intent);
                 break;
             }
