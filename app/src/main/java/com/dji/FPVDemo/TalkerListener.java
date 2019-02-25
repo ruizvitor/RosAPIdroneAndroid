@@ -3,9 +3,9 @@ package com.dji.FPVDemo;
 import android.os.Environment;
 
 import org.apache.commons.logging.Log;
-import org.ros.exception.RosRuntimeException;
+
 import org.ros.message.MessageListener;
-import org.ros.message.Time;
+
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.Node;
@@ -16,12 +16,17 @@ import org.ros.node.topic.Subscriber;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-//import java.lang.String;
+
+import dji.common.flightcontroller.imu.IMUState;
+import dji.common.gimbal.Rotation;
+import dji.sdk.camera.VideoFeeder;
+import dji.sdk.codec.DJICodecManager;
+import dji.sdk.gimbal.Gimbal;
 import std_msgs.String;
 
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -39,14 +44,22 @@ import dji.sdk.media.MediaManager;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.view.TextureView;
 
-import org.jboss.netty.buffer.ChannelBufferOutputStream;
 import org.ros.internal.message.MessageBuffers;
 
 public class TalkerListener extends AbstractNodeMain {
     private static final java.lang.String TAG = TalkerListener.class.getName();
 
     ConnectedNode mynode;
+
+    //BEGIN Codec for video live view
+    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
+    protected DJICodecManager mCodecManager = null;
+
+    //protected TextureView mVideoSurface = null;
+    //END Codec for video live view
+
 
     //BEGIN MediaManager
     private List<MediaFile> mediaFileList = new ArrayList<MediaFile>();
@@ -63,6 +76,7 @@ public class TalkerListener extends AbstractNodeMain {
     public GraphName getDefaultNodeName() {
         return GraphName.of("rosjava/talkerListener");
     }
+
 
     @Override
     public void onStart(ConnectedNode connectedNode) {
@@ -93,6 +107,8 @@ public class TalkerListener extends AbstractNodeMain {
                     clearAndroidFolder();
                 } else if (message.getData().equals("downloadToAn")) {
                     initMediaManager(1);
+                } else if (message.getData().equals("downloadToAn")) {
+//                    rotate();
                 } else if (message.getData().equals("downloadToHost")) {
 
                     for (File f : destDir.listFiles()) {
@@ -110,6 +126,18 @@ public class TalkerListener extends AbstractNodeMain {
             }
         });
     }
+//
+//    void rotate() {
+//        Gimbal gimbal;
+//        Rotation rot;
+//        //rotate pitch
+//        gimbal.rotate(rot, new CommonCallbacks.CompletionCallback() {
+//            @Override
+//            public void onResult(DJIError djiError) {
+//
+//            }
+//        });
+//    }
 
     void clearAndroidFolder() {
         File[] dir = destDir.listFiles();
@@ -136,50 +164,7 @@ public class TalkerListener extends AbstractNodeMain {
         publisher.publish(str);
     }
 
-//    public static int calculateInSampleSize(
-//            BitmapFactory.Options options, int reqWidth, int reqHeight) {
-//        // Raw height and width of image
-//        final int height = options.outHeight;
-//        final int width = options.outWidth;
-//        int inSampleSize = 1;
-//
-//        if (height > reqHeight || width > reqWidth) {
-//
-//            final int halfHeight = height / 2;
-//            final int halfWidth = width / 2;
-//
-//            // Calculate the largest inSampleSize value that is a power of 2 and keeps both
-//            // height and width larger than the requested height and width.
-//            while ((halfHeight / inSampleSize) >= reqHeight
-//                    && (halfWidth / inSampleSize) >= reqWidth) {
-//                inSampleSize *= 2;
-//            }
-//        }
-//
-//        return inSampleSize;
-//    }
-//
-//
-//    public static Bitmap decodeSampledBitmapFromResource(java.lang.String path, int reqWidth, int reqHeight) {
-//
-//        // First decode with inJustDecodeBounds=true to check dimensions
-//        final BitmapFactory.Options options = new BitmapFactory.Options();
-//        //options.inJustDecodeBounds = true;
-//        //BitmapFactory.decodeResource(res, resId, options);
-//        //BitmapFactory.decodeFile(path, options);
-//
-//        // Calculate inSampleSize
-//        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-//
-//        // Decode bitmap with inSampleSize set
-//        options.inJustDecodeBounds = false;
-//        //return BitmapFactory.decodeResource(res, resId, options);
-//        return BitmapFactory.decodeFile(path, options);
-//    }
-//
-
-    private Bitmap decodeMyFile(java.lang.String imgPath)
-    {
+    private Bitmap decodeMyFile(java.lang.String imgPath) {
         Bitmap b = null;
         int max_size = 1000;
         File f = new File(imgPath);
@@ -190,8 +175,7 @@ public class TalkerListener extends AbstractNodeMain {
             BitmapFactory.decodeStream(fis, null, o);
             fis.close();
             int scale = 1;
-            if (o.outHeight > max_size || o.outWidth > max_size)
-            {
+            if (o.outHeight > max_size || o.outWidth > max_size) {
                 scale = (int) Math.pow(2, (int) Math.ceil(Math.log(max_size / (double) Math.max(o.outHeight, o.outWidth)) / Math.log(0.5)));
             }
             BitmapFactory.Options o2 = new BitmapFactory.Options();
@@ -199,28 +183,12 @@ public class TalkerListener extends AbstractNodeMain {
             fis = new FileInputStream(f);
             b = BitmapFactory.decodeStream(fis, null, o2);
             fis.close();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
         }
         return b;
     }
 
-    void pubImg(Publisher<sensor_msgs.CompressedImage> publisherImg, java.lang.String path) {
-
-
-        //1280h,720w good size!
-
-        //Bitmap bmp = BitmapFactory.decodeFile(path);
-//        Bitmap bmp = decodeSampledBitmapFromResource(path,720, 1280);
-        Bitmap bmp = decodeMyFile(path);
-
-//        if (bmp == null) {
-//            android.util.Log.d(TAG, "FILE FAILED NULL!!!!!!!!!!!!!!!!!!!!!!!!!");
-//        }
-
-        //Compressed image
-
+    void intermediaryPubImg(Bitmap bmp) {
         sensor_msgs.CompressedImage image = publisherImg.newMessage();
 
         image.setFormat("jpeg");
@@ -230,9 +198,6 @@ public class TalkerListener extends AbstractNodeMain {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-//        bmp.compress(Bitmap.CompressFormat.JPEG, 10, baos);
-        bmp.recycle();//to destroy it
-
 
         ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());
         stream.buffer().writeBytes(baos.toByteArray());
@@ -242,9 +207,13 @@ public class TalkerListener extends AbstractNodeMain {
 
 
         stream.buffer().clear();
-//        android.util.Log.d(TAG, "pre publish");
         publisherImg.publish(image);
-//        android.util.Log.d(TAG, "after publish");
+    }
+
+    void pubImg(Publisher<sensor_msgs.CompressedImage> publisherImg, java.lang.String path) {
+        Bitmap bmp = decodeMyFile(path);
+        intermediaryPubImg(bmp);
+        bmp.recycle();
     }
 
 
@@ -284,15 +253,10 @@ public class TalkerListener extends AbstractNodeMain {
                             @Override
                             public void onResult(DJIError djiError) {
                                 if (djiError == null) {
-                                    //showToast("take photo: success");
-                                    //initMediaManager();
                                     android.util.Log.d(TAG, "take photo: success");
-                                    //callback.success("success");
                                     pubMessage(publisher, "photo taken");
                                 } else {
-                                    //showToast(djiError.getDescription());
                                     android.util.Log.d(TAG, "take photo: failed");
-                                    //callback.success("failed");
                                     pubMessage(publisher, "photo failed");
                                 }
                             }
@@ -443,6 +407,24 @@ public class TalkerListener extends AbstractNodeMain {
             return;
         }
 
+        mediaFileList.get(index).fetchPreview(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError error) {
+                if (null == error) {
+                    Bitmap bmp = mediaFileList.get(index).getPreview();
+                    intermediaryPubImg(bmp);
+                } else pubMessage(publisher, "Download File failed");
+            }
+        });
+
+    }
+
+    private void downloadFileByIndexFull(final int index) {
+        if ((mediaFileList.get(index).getMediaType() == MediaFile.MediaType.PANORAMA)
+                || (mediaFileList.get(index).getMediaType() == MediaFile.MediaType.SHALLOW_FOCUS)) {
+            return;
+        }
+
         mediaFileList.get(index).fetchFileData(destDir, null, new DownloadListener<java.lang.String>() {
             @Override
             public void onFailure(DJIError error) {
@@ -456,7 +438,6 @@ public class TalkerListener extends AbstractNodeMain {
 
             @Override
             public void onRateUpdate(long total, long current, long persize) {
-
             }
 
             @Override
@@ -537,5 +518,11 @@ public class TalkerListener extends AbstractNodeMain {
 //            }
 //        }
 //    }
+
+//    IMUState imu;
+//    imu.getGyroscopeState();
+//
+
+
 }
 

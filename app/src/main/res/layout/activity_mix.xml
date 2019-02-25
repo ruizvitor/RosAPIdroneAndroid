@@ -10,4 +10,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Activity Placeholder" />
+
+    <SurfaceView
+        android:id="@+id/livestream_preview_sf"
+        android:layout_width="360dp"
+        android:layout_height="180dp"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:visibility="visible"
+        />
+
 </RelativeLayout>
