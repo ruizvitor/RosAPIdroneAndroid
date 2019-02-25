@@ -5,7 +5,6 @@ import android.graphics.Rect;
 import android.graphics.YuvImage;
 
 
-
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferOutputStream;
@@ -19,6 +18,7 @@ import org.ros.node.topic.Subscriber;
 
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteOrder;
 
 import std_msgs.String;
 
@@ -97,11 +97,15 @@ public class VideoStream extends AbstractNodeMain {
     }
 
     public void publishScreenShotv2(byte[] buf, int width, int height) {
-        android.util.Log.d(TAG, "SENDING IMAGE!!!!!!!!");
-        ChannelBuffer cbuf = copiedBuffer(buf);
 
-        sensor_msgs.CompressedImage image = publisherImg.newMessage();
-        image.setData(cbuf);
-        publisherImg.publish(image);
+        if (publisherImg != null) {
+            android.util.Log.d(TAG, "SENDING IMAGE!!!!!!!!");
+            ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
+
+            sensor_msgs.CompressedImage image = publisherImg.newMessage();
+            image.setData(cbuf);
+            publisherImg.publish(image);
+        }
+
     }
 }

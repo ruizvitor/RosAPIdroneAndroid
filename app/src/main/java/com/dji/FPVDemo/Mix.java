@@ -168,17 +168,49 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 
     }
 
+    private class MyAsyncTask extends AsyncTask<Void, Void, Void> {
+
+        byte[] bytes;
+        int width;
+        int height;
+
+        MyAsyncTask(ByteBuffer yuvFrame, int size, int w, int h) {
+            bytes = new byte[size];
+            yuvFrame.get(bytes);
+            width = w;
+            height = h;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+//            Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
+            videoStream.publishScreenShotv2(bytes, width, height);
+            return null;
+        }
+    }
+
     @Override
-    public void onYuvDataReceived(final ByteBuffer yuvFrame, final int dataSize, final int width, final int height) {
-        AsyncTask.execute(new Runnable() {
-            @Override
-            public void run() {
-                Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
-                final byte[] bytes = new byte[dataSize];
-                yuvFrame.get(bytes);
-                videoStream.publishScreenShotv2(bytes, width, height);
-            }
-        });
+    public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, int width, int height) {
+
+//        final byte[] bytes = new byte[dataSize];
+//        yuvFrame.get(bytes);
+//        AsyncTask<byte[], void, void> mAsyncTask;
+//        mAsyncTask.execute(bytes,null,null);
+
+
+//        AsyncTask.execute(new Runnable() {
+//            @Override
+//            public void run() {
+//                Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
+//                final byte[] bytes = new byte[dataSize];
+//                yuvFrame.get(bytes);
+//                videoStream.publishScreenShotv2(bytes, width, height);
+//            }
+//        });
+
+
+        MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
+        myAsyncTask.execute();
     }
 
 
