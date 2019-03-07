@@ -30,7 +30,7 @@ public class VideoStream extends AbstractNodeMain {
 
     ConnectedNode mynode;
     Publisher<String> publisher;
-    Publisher<sensor_msgs.CompressedImage> publisherImg;
+    Publisher<sensor_msgs.Image> publisherImg;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -45,7 +45,7 @@ public class VideoStream extends AbstractNodeMain {
         Subscriber<String> subscriber = connectedNode.newSubscriber("chatter", std_msgs.String._TYPE);
 
         publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
-        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
+        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.Image._TYPE);
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -64,48 +64,27 @@ public class VideoStream extends AbstractNodeMain {
         publisher.publish(str);
     }
 
-    /**
-     * Save the buffered data into a JPG image file
-     */
-    public void publishScreenShot(byte[] buf, int width, int height) {
-        YuvImage yuvImage = new YuvImage(buf,
-                ImageFormat.NV21,
-                width,
-                height,
-                null);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        yuvImage.compressToJpeg(new Rect(0,
-                        0,
-                        width,
-                        height),
-                10,//quality
-                baos);
-
-        sensor_msgs.CompressedImage image = publisherImg.newMessage();
-
-        image.setFormat("jpeg");
-        image.getHeader().setStamp(mynode.getCurrentTime());
-        image.getHeader().setFrameId("camera");
-
-        ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());
-        stream.buffer().writeBytes(baos.toByteArray());
-        image.setData(stream.buffer().copy());
-        stream.buffer().clear();
-
-        publisherImg.publish(image);
-    }
-
-    public void publishScreenShotv2(byte[] buf, int width, int height) {
-
+    public void publishImage(byte[] buf, int width, int height) {
         if (publisherImg != null) {
-            android.util.Log.d(TAG, "SENDING IMAGE!!!!!!!!");
             ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
 
-            sensor_msgs.CompressedImage image = publisherImg.newMessage();
+            sensor_msgs.Image image = publisherImg.newMessage();
+//        image.setWidth(width);
+//        image.setHeight(height);
+//        image.setWidth(960);
+//        image.setHeight(1080);
+
+//            image.setWidth(960 * 1080);
+//            image.setHeight(1);
+
+            image.setWidth(960);
+            image.setHeight(1080);
+            image.setStep(960);
+
+            image.setEncoding("mono8");
             image.setData(cbuf);
             publisherImg.publish(image);
         }
-
     }
 }

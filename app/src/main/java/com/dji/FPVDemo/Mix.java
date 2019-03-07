@@ -74,6 +74,7 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mix);
         doSomething();
+
     }
 
     @Override
@@ -86,6 +87,7 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
         videoStream = new VideoStream();
         nodeConfiguration.setNodeName("videoStream");
         nodeMainExecutor.execute(videoStream, nodeConfiguration);
+//        doSomething();
     }
     /*
         END ROS CONFIG
@@ -94,6 +96,7 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
     private DJICodecManager mCodecManager;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     private Camera mCamera;
+    int index;
 
     @Override
     protected void onResume() {
@@ -183,14 +186,18 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 
         @Override
         protected Void doInBackground(Void... params) {
-//            Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
-            videoStream.publishScreenShotv2(bytes, width, height);
+            Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
+            if (videoStream != null) {
+//                Log.d(TAG, "width: "+String.valueOf(width) + " height:" + String.valueOf(height));
+//                Log.d(TAG, "bytes.len:"+String.valueOf(bytes.length));
+                videoStream.publishImage(bytes, width, height);
+            }
             return null;
         }
     }
 
     @Override
-    public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, int width, int height) {
+    public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
 
 //        final byte[] bytes = new byte[dataSize];
 //        yuvFrame.get(bytes);
@@ -208,9 +215,49 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 //            }
 //        });
 
+//        if(index > 1000){
+//            index = 0;
+//        }
+//
+//        if(index++ % 30 == 0 && yuvFrame != null){
+//            MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
+//            myAsyncTask.execute();
+//        }
+//        if (yuvFrame != null) {
+//            MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
+//            myAsyncTask.execute();
+//        }
+
+//        if (index++ % 30 == 0 && yuvFrame != null) {
+//            final byte[] bytes = new byte[dataSize];
+//            yuvFrame.get(bytes);
+//            //DJILog.d(TAG, "onYuvDataReceived2 " + dataSize);
+//            AsyncTask.execute(new Runnable() {
+//                @Override
+//                public void run() {
+//                    saveYuvDataToJPEG(bytes, width, height);
+//                }
+//            });
+//        }
 
         MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
         myAsyncTask.execute();
+
+//        if (index++ % 30 == 0 && yuvFrame != null) {
+//            final byte[] bytes = new byte[dataSize];
+//            yuvFrame.get(bytes);
+//            AsyncTask.execute(new Runnable() {
+//                @Override
+//                public void run() {
+//                    if (videoStream != null) {
+//                        videoStream.publishImage(bytes, width, height);
+//                    }
+//                }
+//            });
+//        }
+//        if (index > 1000) {
+//            index = 0;
+//        }
     }
 
 
