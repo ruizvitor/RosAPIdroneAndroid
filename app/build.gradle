@@ -4,12 +4,21 @@ android {
     compileSdkVersion 27
     defaultConfig {
         applicationId "com.dji.FPVDemo"
-        minSdkVersion 19
+        minSdkVersion 21
         targetSdkVersion 27
         versionCode 1
         versionName "1.0"
+        ndk {
+            abiFilters "armeabi-v7a"
+        }
     }
 
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
 
     configurations.all {
         resolutionStrategy.force 'com.android.support:appcompat-v7:25.1.0'
@@ -32,6 +41,13 @@ android {
         doNotStrip "*/*/libFR.so"
         exclude 'META-INF/rxjava.properties'
     }
+
+
+    sourceSets {
+        main {
+            jniLibs.srcDir 'libs'
+        }
+    }
 }
 
 dependencies {
@@ -42,6 +58,7 @@ dependencies {
 //
 //
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+
     implementation('com.dji:dji-sdk:4.9')
     compileOnly('com.dji:dji-sdk-provided:4.9')
 

@@ -1,9 +1,13 @@
 package com.dji.FPVDemo;
 
+import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 
+
+import com.dji.FPVDemo.media.DJIVideoStreamDecoder;
+import com.dji.videostreamdecodingsample.media.NativeHelper;
 
 import org.apache.commons.logging.Log;
 import org.jboss.netty.buffer.ChannelBuffer;
@@ -19,18 +23,34 @@ import org.ros.node.topic.Subscriber;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteOrder;
+import java.util.List;
 
+import dji.common.camera.SettingsDefinitions;
+import dji.common.error.DJIError;
+import dji.common.product.Model;
+import dji.common.util.CommonCallbacks;
+import dji.sdk.base.BaseProduct;
+import dji.sdk.camera.Camera;
+import dji.sdk.camera.VideoFeeder;
+import std_msgs.MultiArrayDimension;
+import std_msgs.MultiArrayLayout;
 import std_msgs.String;
 
 import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
 
 public class VideoStream extends AbstractNodeMain {
 
+    Context context = null;
+    protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
+    Camera mCamera = null;
+    DJIVideoStreamDecoder djiDecoder = null;
+    public static VideoStream instance = null;
+
     private static final java.lang.String TAG = VideoStream.class.getName();
 
     ConnectedNode mynode;
     Publisher<String> publisher;
-    Publisher<sensor_msgs.CompressedImage> publisherImg;
+    Publisher<sensor_msgs.Image> publisherImg;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -45,7 +65,7 @@ public class VideoStream extends AbstractNodeMain {
         Subscriber<String> subscriber = connectedNode.newSubscriber("chatter", std_msgs.String._TYPE);
 
         publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
-        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
+        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.Image._TYPE);
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -56,6 +76,7 @@ public class VideoStream extends AbstractNodeMain {
             }
         });
 
+        initMy();
     }
 
     public void pubMessage(java.lang.String msg) {
@@ -64,47 +85,64 @@ public class VideoStream extends AbstractNodeMain {
         publisher.publish(str);
     }
 
-    /**
-     * Save the buffered data into a JPG image file
-     */
-    public void publishScreenShot(byte[] buf, int width, int height) {
-        YuvImage yuvImage = new YuvImage(buf,
-                ImageFormat.NV21,
-                width,
-                height,
-                null);
 
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        yuvImage.compressToJpeg(new Rect(0,
-                        0,
-                        width,
-                        height),
-                10,//quality
-                baos);
+    public void publishImage(byte[] buf, int size) {
+//        android.util.Log.d(TAG, "SENDING IMAGE!!!!!!!!");
+//        ChannelBuffer cbuf = copiedBuffer(ByteOrder.BIG_ENDIAN, buf);
+        ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
 
-        sensor_msgs.CompressedImage image = publisherImg.newMessage();
-
-        image.setFormat("jpeg");
-        image.getHeader().setStamp(mynode.getCurrentTime());
-        image.getHeader().setFrameId("camera");
-
-        ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());
-        stream.buffer().writeBytes(baos.toByteArray());
-        image.setData(stream.buffer().copy());
-        stream.buffer().clear();
-
+        sensor_msgs.Image image = publisherImg.newMessage();
+        image.setWidth(1);
+        image.setHeight(size);
+        image.setData(cbuf);
         publisherImg.publish(image);
     }
 
-    public void publishScreenShotv2(byte[] buf, int width, int height) {
+    public static VideoStream getInstance() {
+        if(instance == null){
+            instance = new VideoStream();
+        }
+        return instance;
+    }
 
-        if (publisherImg != null) {
-            android.util.Log.d(TAG, "SENDING IMAGE!!!!!!!!");
-            ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
+    public void setContext(Context cx) {
+        context = cx;
+    }
 
-            sensor_msgs.CompressedImage image = publisherImg.newMessage();
-            image.setData(cbuf);
-            publisherImg.publish(image);
+    void initMy() {
+
+        djiDecoder = new DJIVideoStreamDecoder(context, VideoStream.getInstance());
+
+        final BaseProduct product = FPVDemoApplication.getProductInstance();
+
+        mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
+            @Override
+            public void onReceive(byte[] videoBuffer, int size) {
+                //handle h264
+                djiDecoder.parse(videoBuffer, size);
+            }
+        };
+
+        if (null == product || !product.isConnected()) {
+            mCamera = null;
+        } else {
+            if (!product.getModel().equals(Model.UNKNOWN_AIRCRAFT)) {
+                mCamera = product.getCamera();
+                mCamera.setMode(SettingsDefinitions.CameraMode.SHOOT_PHOTO, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError djiError) {
+                        if (djiError != null) {
+                            android.util.Log.d(TAG, "can't change mode of camera, error:" + djiError.getDescription());
+                        } else {
+                            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
+                                VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
+                            }
+                        }
+                    }
+                });
+
+
+            }
         }
 
     }
