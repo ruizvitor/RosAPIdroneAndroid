@@ -73,67 +73,133 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mix);
-        doSomething();
-
+        initUi();
     }
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
 
-//        TalkerListener talkerListener = new TalkerListener();
-//        nodeConfiguration.setNodeName("talkerListener");
-//        nodeMainExecutor.execute(talkerListener, nodeConfiguration);
         videoStream = new VideoStream();
         nodeConfiguration.setNodeName("videoStream");
         nodeMainExecutor.execute(videoStream, nodeConfiguration);
-//        doSomething();
     }
     /*
         END ROS CONFIG
      */
 
-    private DJICodecManager mCodecManager;
+
+    //BEGIN LIVE STREAMING VARS
+    private SurfaceView videostreamPreviewSf;
+    private SurfaceHolder videostreamPreviewSh;
+    private SurfaceHolder.Callback surfaceCallback;
+    private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
+    private DJICodecManager mCodecManager;
     private Camera mCamera;
-    int index;
+    private int videoViewWidth;
+    private int videoViewHeight;
+    private int index = 0;
+    //END LIVE STREAMING VARS
 
     @Override
     protected void onResume() {
         super.onResume();
-        doSomething();
+        initPreviewerSurfaceView();
+        notifyStatusChange();
     }
 
-    void doSomething() {
+//    @Override
+//    protected void onPause() {
+//        if (mCamera != null) {
+//            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
+//                VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
+//            }
+//            if (standardVideoFeeder != null) {
+//                standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
+//            }
+//        }
+//        super.onPause();
+//    }
+
+    @Override
+    protected void onDestroy() {
+        if (mCodecManager != null) {
+            mCodecManager.cleanSurface();
+            mCodecManager.destroyCodec();
+        }
+        super.onDestroy();
+    }
+
+    private void initUi() {
+        videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
+//        VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
+//        VideoFeeder.getInstance().setTranscodingDataRate(20.0f);
+        VideoFeeder.getInstance().setTranscodingDataRate(2.0f);
+//        VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
+        updateUIVisibility();
+    }
+
+    private void updateUIVisibility() {
+        videostreamPreviewSf.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Init a surface view for the DJIVideoStreamDecoder
+     */
+    private void initPreviewerSurfaceView() {
+        videostreamPreviewSh = videostreamPreviewSf.getHolder();
+        surfaceCallback = new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                Log.d(TAG, "real onSurfaceTextureAvailable");
+                videoViewWidth = videostreamPreviewSf.getWidth();
+                videoViewHeight = videostreamPreviewSf.getHeight();
+                Log.d(TAG, "real onSurfaceTextureAvailable3: width " + videoViewWidth + " height " + videoViewHeight);
+
+                if (mCodecManager == null) {
+                    mCodecManager = new DJICodecManager(getApplicationContext(), holder, videoViewWidth,
+                            videoViewHeight);
+                    mCodecManager.enabledYuvData(true);
+                    mCodecManager.setYuvDataCallback(Mix.this);
+                }
+
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                videoViewWidth = width;
+                videoViewHeight = height;
+                Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                if (mCodecManager != null) {
+                    mCodecManager.cleanSurface();
+                    mCodecManager.destroyCodec();
+                    mCodecManager = null;
+                }
+            }
+        };
+
+        videostreamPreviewSh.addCallback(surfaceCallback);
+    }
+
+
+    private void notifyStatusChange() {
 
         final BaseProduct product = FPVDemoApplication.getProductInstance();
+        Log.d(TAG, "notifyStatusChange: " + (product == null ? "Disconnect" : (product.getModel() == null ? "null model" : product.getModel().name())));
 
-        final MySurfaceView dummy = addPreView();
-//        MySurfaceView dummy = new MySurfaceView(this);
-//        mCodecManager = dummy.mCodecManager;
-//        if (mCodecManager == null) {
-//            Log.d(TAG,"mCodecManager == null");
-//        } else {
-//            Log.d(TAG,"mCodecManager != null");
-//        }
-
-//        int w = 960, h = 720;
-//
-//        Bitmap.Config conf = Bitmap.Config.ARGB_8888; // see other conf types
-//        Bitmap bmp = Bitmap.createBitmap(w, h, conf); // this creates a MUTABLE bitmap
-//        Canvas canvas = new Canvas(bmp);
-//
-//        dummy.draw(canvas);
 
         // The callback for receiving the raw H264 video data for camera live view
         mReceivedVideoDataListener = new VideoFeeder.VideoDataListener() {
 
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
-//                Log.d(TAG, "ENTER mCodecManager.sendDataToDecoder!!!!!!!!");
-                if (dummy.mCodecManager != null) {
-//                    Log.d(TAG, "mCodecManager.sendDataToDecoder!!!!!!!!");
-                    dummy.mCodecManager.sendDataToDecoder(videoBuffer, size);
+                if (mCodecManager != null) {
+                    mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
             }
         };
@@ -157,107 +223,27 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
                 }
             }
         }
-
-//        if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-//            VideoFeeder.getInstance().getPrimaryVideoFeed().addVideoDataListener(mReceivedVideoDataListener);
-//        }
-
-//        if (mCodecManager == null) {
-//            mCodecManager = new DJICodecManager(getApplicationContext(), dummy.mHolder, dummy.videoViewWidth,
-//                    dummy.videoViewHeight);
-//            mCodecManager.enabledYuvData(true);
-//            mCodecManager.setYuvDataCallback(Mix.this);
-//        }
-
     }
 
-    private class MyAsyncTask extends AsyncTask<Void, Void, Void> {
-
-        byte[] bytes;
-        int width;
-        int height;
-
-        MyAsyncTask(ByteBuffer yuvFrame, int size, int w, int h) {
-            bytes = new byte[size];
-            yuvFrame.get(bytes);
-            width = w;
-            height = h;
-        }
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
-            if (videoStream != null) {
-//                Log.d(TAG, "width: "+String.valueOf(width) + " height:" + String.valueOf(height));
-//                Log.d(TAG, "bytes.len:"+String.valueOf(bytes.length));
-                videoStream.publishImage(bytes, width, height);
-            }
-            return null;
-        }
-    }
 
     @Override
     public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
 
-//        final byte[] bytes = new byte[dataSize];
-//        yuvFrame.get(bytes);
-//        AsyncTask<byte[], void, void> mAsyncTask;
-//        mAsyncTask.execute(bytes,null,null);
+        //skip some frames to reduce delay
+//        if (index++ % 10 == 0 && yuvFrame != null) {
+          if (index++ % 10 == 0 && yuvFrame != null) {
+//        if (index++ % 5 == 0 && yuvFrame != null) {
+            final byte[] bytes = new byte[dataSize];
+            yuvFrame.get(bytes);
 
+            if (videoStream != null && (bytes.length >= width * height)) {
+                videoStream.publishImage(bytes, width, height);
+            }
+        }
 
-//        AsyncTask.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                Log.d(TAG, "onYuvDataReceived RUN!!!!!!!!!!!");
-//                final byte[] bytes = new byte[dataSize];
-//                yuvFrame.get(bytes);
-//                videoStream.publishScreenShotv2(bytes, width, height);
-//            }
-//        });
-
-//        if(index > 1000){
-//            index = 0;
-//        }
-//
-//        if(index++ % 30 == 0 && yuvFrame != null){
-//            MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
-//            myAsyncTask.execute();
-//        }
-//        if (yuvFrame != null) {
-//            MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
-//            myAsyncTask.execute();
-//        }
-
-//        if (index++ % 30 == 0 && yuvFrame != null) {
-//            final byte[] bytes = new byte[dataSize];
-//            yuvFrame.get(bytes);
-//            //DJILog.d(TAG, "onYuvDataReceived2 " + dataSize);
-//            AsyncTask.execute(new Runnable() {
-//                @Override
-//                public void run() {
-//                    saveYuvDataToJPEG(bytes, width, height);
-//                }
-//            });
-//        }
-
-        MyAsyncTask myAsyncTask = new MyAsyncTask(yuvFrame, dataSize, width, height);
-        myAsyncTask.execute();
-
-//        if (index++ % 30 == 0 && yuvFrame != null) {
-//            final byte[] bytes = new byte[dataSize];
-//            yuvFrame.get(bytes);
-//            AsyncTask.execute(new Runnable() {
-//                @Override
-//                public void run() {
-//                    if (videoStream != null) {
-//                        videoStream.publishImage(bytes, width, height);
-//                    }
-//                }
-//            });
-//        }
-//        if (index > 1000) {
-//            index = 0;
-//        }
+        if (index > 1000) {
+            index = 0;
+        }
     }
 
 

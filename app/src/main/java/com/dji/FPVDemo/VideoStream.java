@@ -3,6 +3,7 @@ package com.dji.FPVDemo;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.os.AsyncTask;
 
 
 import org.apache.commons.logging.Log;
@@ -30,7 +31,8 @@ public class VideoStream extends AbstractNodeMain {
 
     ConnectedNode mynode;
     Publisher<String> publisher;
-    Publisher<sensor_msgs.Image> publisherImg;
+    //    Publisher<sensor_msgs.Image> publisherImg;
+    Publisher<sensor_msgs.CompressedImage> publisherImg;
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -45,7 +47,8 @@ public class VideoStream extends AbstractNodeMain {
         Subscriber<String> subscriber = connectedNode.newSubscriber("chatter", std_msgs.String._TYPE);
 
         publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
-        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.Image._TYPE);
+//        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.Image._TYPE);
+        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -65,26 +68,81 @@ public class VideoStream extends AbstractNodeMain {
     }
 
 
-    public void publishImage(byte[] buf, int width, int height) {
+    public void publishImage(final byte[] buf, final int width, final int height) {
         if (publisherImg != null) {
-            ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
+            AsyncTask.execute(new Runnable() {
+                @Override
+                public void run() {
 
-            sensor_msgs.Image image = publisherImg.newMessage();
-//        image.setWidth(width);
-//        image.setHeight(height);
-//        image.setWidth(960);
-//        image.setHeight(1080);
+                    //START COMPUTATION
+                    int ylen = width * height;
+//                    byte[] y = new byte[ylen];
+                    byte[] u = new byte[ylen / 4];
+                    byte[] v = new byte[ylen / 4];
+                    byte[] nu = new byte[ylen / 4];
+                    byte[] nv = new byte[ylen / 4];
 
-//            image.setWidth(960 * 1080);
-//            image.setHeight(1);
+//                    System.arraycopy(buf, 0, y, 0, y.length);
+                    for (int i = 0; i < u.length; i++) {
+                        v[i] = buf[ylen + 2 * i];
+                        u[i] = buf[ylen + 2 * i + 1];
+                    }
+                    int uvWidth = width / 2;
+                    int uvHeight = height / 2;
+                    for (int j = 0; j < uvWidth / 2; j++) {
+                        for (int i = 0; i < uvHeight / 2; i++) {
+                            byte uSample1 = u[i * uvWidth + j];
+                            byte uSample2 = u[i * uvWidth + j + uvWidth / 2];
+                            byte vSample1 = v[(i + uvHeight / 2) * uvWidth + j];
+                            byte vSample2 = v[(i + uvHeight / 2) * uvWidth + j + uvWidth / 2];
+                            nu[2 * (i * uvWidth + j)] = uSample1;
+                            nu[2 * (i * uvWidth + j) + 1] = uSample1;
+                            nu[2 * (i * uvWidth + j) + uvWidth] = uSample2;
+                            nu[2 * (i * uvWidth + j) + 1 + uvWidth] = uSample2;
+                            nv[2 * (i * uvWidth + j)] = vSample1;
+                            nv[2 * (i * uvWidth + j) + 1] = vSample1;
+                            nv[2 * (i * uvWidth + j) + uvWidth] = vSample2;
+                            nv[2 * (i * uvWidth + j) + 1 + uvWidth] = vSample2;
+                        }
+                    }
+                    //nv21test
+                    byte[] bytes = new byte[buf.length];
+//                    System.arraycopy(y, 0, bytes, 0, y.length);
+                    System.arraycopy(buf, 0, bytes, 0, ylen);
+                    for (int i = 0; i < u.length; i++) {
+                        bytes[ylen + (i * 2)] = nv[i];
+                        bytes[ylen + (i * 2) + 1] = nu[i];
+                    }
 
-            image.setWidth(960);
-            image.setHeight(1080);
-            image.setStep(960);
+                    //END COMPUTATION
+                    YuvImage yuvImage = new YuvImage(bytes,
+                            ImageFormat.NV21,
+                            width,
+                            height,
+                            null);
 
-            image.setEncoding("mono8");
-            image.setData(cbuf);
-            publisherImg.publish(image);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    yuvImage.compressToJpeg(new Rect(0,
+                                    0,
+                                    width,
+                                    height),
+                            75,//quality
+                            baos);
+
+                    sensor_msgs.CompressedImage image = publisherImg.newMessage();
+
+                    image.setFormat("jpeg");
+                    image.getHeader().setStamp(mynode.getCurrentTime());
+                    image.getHeader().setFrameId("camera");
+
+                    ChannelBufferOutputStream stream = new ChannelBufferOutputStream(MessageBuffers.dynamicBuffer());
+                    stream.buffer().writeBytes(baos.toByteArray());
+                    image.setData(stream.buffer().copy());
+                    stream.buffer().clear();
+
+                    publisherImg.publish(image);
+                }
+            });
         }
     }
 }

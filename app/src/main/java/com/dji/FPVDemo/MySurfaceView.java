@@ -70,6 +70,6 @@ class MySurfaceView extends SurfaceView {
         };
 
         mHolder.addCallback(surfaceCallback);
-        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+//        mHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
 }
