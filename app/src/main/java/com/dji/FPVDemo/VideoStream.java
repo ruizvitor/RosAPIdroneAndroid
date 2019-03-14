@@ -70,49 +70,48 @@ public class VideoStream extends AbstractNodeMain {
 
     public void publishImage(final byte[] buf, final int width, final int height) {
         if (publisherImg != null) {
+
+            //resize buf
+
+//            byte[] cp = new byte[(width * height)];
+//            System.arraycopy(buf, 0, cp, 0, (width * height));
+//
+//            byte[] bytes = new byte[(width * height) / 4];
+//
+//            for (int i = 0; i < height; i+=2) {
+//                for (int j = 0; j < width; j+=2) {
+//                    bytes[((i/2)*width)+(j/2)] = cp[(i*width)+j];
+//                }
+//            }
+
+//            ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
+//
+////            sensor_msgs.Image image = publisherImg.newMessage();
+//            sensor_msgs.CompressedImage image = publisherImg.newMessage();
+//
+////            image.setWidth(width);
+////            image.setHeight(height);
+////            image.setEncoding("mono8");
+////            image.setStep(width);
+//
+////            image.setHeader();
+//
+//            image.getHeader().setStamp(mynode.getCurrentTime());
+//            image.getHeader().setFrameId("camera");
+//            image.setFormat("jpeg");
+//            image.setData(cbuf);
+//
+//            publisherImg.publish(image);
+
+
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-
-                    //START COMPUTATION
                     int ylen = width * height;
-//                    byte[] y = new byte[ylen];
-                    byte[] u = new byte[ylen / 4];
-                    byte[] v = new byte[ylen / 4];
-                    byte[] nu = new byte[ylen / 4];
-                    byte[] nv = new byte[ylen / 4];
-
-//                    System.arraycopy(buf, 0, y, 0, y.length);
-                    for (int i = 0; i < u.length; i++) {
-                        v[i] = buf[ylen + 2 * i];
-                        u[i] = buf[ylen + 2 * i + 1];
-                    }
-                    int uvWidth = width / 2;
-                    int uvHeight = height / 2;
-                    for (int j = 0; j < uvWidth / 2; j++) {
-                        for (int i = 0; i < uvHeight / 2; i++) {
-                            byte uSample1 = u[i * uvWidth + j];
-                            byte uSample2 = u[i * uvWidth + j + uvWidth / 2];
-                            byte vSample1 = v[(i + uvHeight / 2) * uvWidth + j];
-                            byte vSample2 = v[(i + uvHeight / 2) * uvWidth + j + uvWidth / 2];
-                            nu[2 * (i * uvWidth + j)] = uSample1;
-                            nu[2 * (i * uvWidth + j) + 1] = uSample1;
-                            nu[2 * (i * uvWidth + j) + uvWidth] = uSample2;
-                            nu[2 * (i * uvWidth + j) + 1 + uvWidth] = uSample2;
-                            nv[2 * (i * uvWidth + j)] = vSample1;
-                            nv[2 * (i * uvWidth + j) + 1] = vSample1;
-                            nv[2 * (i * uvWidth + j) + uvWidth] = vSample2;
-                            nv[2 * (i * uvWidth + j) + 1 + uvWidth] = vSample2;
-                        }
-                    }
                     //nv21test
-                    byte[] bytes = new byte[buf.length];
-//                    System.arraycopy(y, 0, bytes, 0, y.length);
+//                    byte[] bytes = new byte[1080*960];
+                    byte[] bytes = new byte[(height+(height/2))*width];
                     System.arraycopy(buf, 0, bytes, 0, ylen);
-                    for (int i = 0; i < u.length; i++) {
-                        bytes[ylen + (i * 2)] = nv[i];
-                        bytes[ylen + (i * 2) + 1] = nu[i];
-                    }
 
                     //END COMPUTATION
                     YuvImage yuvImage = new YuvImage(bytes,
@@ -122,12 +121,20 @@ public class VideoStream extends AbstractNodeMain {
                             null);
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//                    yuvImage.compressToJpeg(new Rect(0,
+//                                    0,
+//                                    width,
+//                                    height),
+//                            10,//quality
+//                            baos);
+
                     yuvImage.compressToJpeg(new Rect(0,
                                     0,
                                     width,
                                     height),
-                            75,//quality
+                            25,//quality
                             baos);
+
 
                     sensor_msgs.CompressedImage image = publisherImg.newMessage();
 
@@ -143,6 +150,7 @@ public class VideoStream extends AbstractNodeMain {
                     publisherImg.publish(image);
                 }
             });
+
         }
     }
 }

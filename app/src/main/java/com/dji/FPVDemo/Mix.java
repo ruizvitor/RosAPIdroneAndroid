@@ -122,8 +122,10 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 //        super.onPause();
 //    }
 
+
     @Override
     protected void onDestroy() {
+        nodeMainExecutorService.forceShutdown();
         if (mCodecManager != null) {
             mCodecManager.cleanSurface();
             mCodecManager.destroyCodec();
@@ -230,13 +232,17 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
     public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
 
         //skip some frames to reduce delay
-//        if (index++ % 10 == 0 && yuvFrame != null) {
-          if (index++ % 10 == 0 && yuvFrame != null) {
-//        if (index++ % 5 == 0 && yuvFrame != null) {
-            final byte[] bytes = new byte[dataSize];
-            yuvFrame.get(bytes);
+        if (index++ % 2 == 0 && yuvFrame != null) {
+//        if (index++ % 30 == 0 && yuvFrame != null) {
 
-            if (videoStream != null && (bytes.length >= width * height)) {
+//            final byte[] bytes = new byte[(width * height)/4];
+//            yuvFrame.get(bytes, 0, (width * height)/4);
+
+            final byte[] bytes = new byte[(width * height)];
+            yuvFrame.get(bytes, 0, (width * height));
+
+            if (videoStream != null ) {
+//                videoStream.publishImage(bytes, width/2, height/2);
                 videoStream.publishImage(bytes, width, height);
             }
         }
