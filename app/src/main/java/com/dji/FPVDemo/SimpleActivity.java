@@ -1,55 +1,32 @@
 package com.dji.FPVDemo;
 
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.SurfaceTexture;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 
 import org.ros.android.RosActivity;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 import dji.common.product.Model;
 
 import dji.common.camera.SettingsDefinitions;
-import dji.common.error.DJICameraError;
 import dji.common.error.DJIError;
 import dji.common.util.CommonCallbacks;
-import dji.log.DJILog;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
-import dji.sdk.media.DownloadListener;
-import dji.sdk.media.FetchMediaTaskScheduler;
-import dji.sdk.media.MediaFile;
-import dji.sdk.media.MediaManager;
 
-public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback {
+public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDataCallback {
 
-    private static final java.lang.String TAG = Mix.class.getName();
+    private static final java.lang.String TAG = SimpleActivity.class.getName();
 
     /*
         START ROS CONFIG
@@ -57,12 +34,12 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 
     VideoStream videoStream = null;
 
-    public Mix() {
+    public SimpleActivity() {
         this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//phantom wifi
         //this("RosDrone", "RosDrone", URI.create("http://192.168.1.104:11311/"));//dinf3
     }
 
-    protected Mix(String notificationTicker, String notificationTitle, URI uri) {
+    protected SimpleActivity(String notificationTicker, String notificationTitle, URI uri) {
         super(notificationTicker, notificationTitle, uri);
     }
 
@@ -88,7 +65,6 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
         END ROS CONFIG
      */
 
-
     //BEGIN LIVE STREAMING VARS
     private SurfaceView videostreamPreviewSf;
     private SurfaceHolder videostreamPreviewSh;
@@ -108,20 +84,6 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
         initPreviewerSurfaceView();
         notifyStatusChange();
     }
-
-//    @Override
-//    protected void onPause() {
-//        if (mCamera != null) {
-//            if (VideoFeeder.getInstance().getPrimaryVideoFeed() != null) {
-//                VideoFeeder.getInstance().getPrimaryVideoFeed().removeVideoDataListener(mReceivedVideoDataListener);
-//            }
-//            if (standardVideoFeeder != null) {
-//                standardVideoFeeder.removeVideoDataListener(mReceivedVideoDataListener);
-//            }
-//        }
-//        super.onPause();
-//    }
-
 
     @Override
     protected void onDestroy() {
@@ -163,7 +125,7 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
                     mCodecManager = new DJICodecManager(getApplicationContext(), holder, videoViewWidth,
                             videoViewHeight);
                     mCodecManager.enabledYuvData(true);
-                    mCodecManager.setYuvDataCallback(Mix.this);
+                    mCodecManager.setYuvDataCallback(SimpleActivity.this);
                 }
 
             }
@@ -230,63 +192,12 @@ public class Mix extends RosActivity implements DJICodecManager.YuvDataCallback 
 
     @Override
     public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
+        final byte[] bytes = new byte[(width+(width/2)) * height];
+        yuvFrame.get(bytes, 0, width * height);
 
-        //skip some frames to reduce delay
-        if (index++ % 2 == 0 && yuvFrame != null) {
-//        if (index++ % 30 == 0 && yuvFrame != null) {
-
-//            final byte[] bytes = new byte[(width * height)/4];
-//            yuvFrame.get(bytes, 0, (width * height)/4);
-
-            final byte[] bytes = new byte[(width * height)];
-            yuvFrame.get(bytes, 0, (width * height));
-
-            if (videoStream != null ) {
-//                videoStream.publishImage(bytes, width/2, height/2);
-                videoStream.publishImage(bytes, width, height);
-            }
+        if (videoStream != null) {
+            videoStream.publishImage(bytes, width, height);
         }
-
-        if (index > 1000) {
-            index = 0;
-        }
-    }
-
-
-    /**
-     * Add camera preview to the root of the activity layout.
-     *
-     * @return {@link CameraPreview} that was added to the view.
-     */
-    private MySurfaceView addPreView() {
-        //create fake camera view
-        MySurfaceView cameraSourceCameraPreview = new MySurfaceView(this, Mix.this);
-        cameraSourceCameraPreview.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        View view = ((ViewGroup) getWindow().getDecorView().getRootView()).getChildAt(0);
-
-        if (view instanceof LinearLayout) {
-            LinearLayout linearLayout = (LinearLayout) view;
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(1, 1);
-            linearLayout.addView(cameraSourceCameraPreview, params);
-        } else if (view instanceof RelativeLayout) {
-            RelativeLayout relativeLayout = (RelativeLayout) view;
-
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(1, 1);
-            params.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
-            params.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-            relativeLayout.addView(cameraSourceCameraPreview, params);
-        } else if (view instanceof FrameLayout) {
-            FrameLayout frameLayout = (FrameLayout) view;
-
-            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(1, 1);
-            frameLayout.addView(cameraSourceCameraPreview, params);
-        } else {
-            throw new RuntimeException("Root view of the activity/fragment cannot be other than Linear/Relative/Frame layout");
-        }
-
-        return cameraSourceCameraPreview;
     }
 
 }

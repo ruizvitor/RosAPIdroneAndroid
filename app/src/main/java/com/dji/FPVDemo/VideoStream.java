@@ -48,7 +48,7 @@ public class VideoStream extends AbstractNodeMain {
 
         publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
 //        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.Image._TYPE);
-        publisherImg = connectedNode.newPublisher("chatterImg", sensor_msgs.CompressedImage._TYPE);
+        publisherImg = connectedNode.newPublisher("camera/compressed", sensor_msgs.CompressedImage._TYPE);
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -71,70 +71,26 @@ public class VideoStream extends AbstractNodeMain {
     public void publishImage(final byte[] buf, final int width, final int height) {
         if (publisherImg != null) {
 
-            //resize buf
-
-//            byte[] cp = new byte[(width * height)];
-//            System.arraycopy(buf, 0, cp, 0, (width * height));
-//
-//            byte[] bytes = new byte[(width * height) / 4];
-//
-//            for (int i = 0; i < height; i+=2) {
-//                for (int j = 0; j < width; j+=2) {
-//                    bytes[((i/2)*width)+(j/2)] = cp[(i*width)+j];
-//                }
-//            }
-
-//            ChannelBuffer cbuf = copiedBuffer(ByteOrder.LITTLE_ENDIAN, buf);
-//
-////            sensor_msgs.Image image = publisherImg.newMessage();
-//            sensor_msgs.CompressedImage image = publisherImg.newMessage();
-//
-////            image.setWidth(width);
-////            image.setHeight(height);
-////            image.setEncoding("mono8");
-////            image.setStep(width);
-//
-////            image.setHeader();
-//
-//            image.getHeader().setStamp(mynode.getCurrentTime());
-//            image.getHeader().setFrameId("camera");
-//            image.setFormat("jpeg");
-//            image.setData(cbuf);
-//
-//            publisherImg.publish(image);
-
 
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
                     int ylen = width * height;
-                    //nv21test
-//                    byte[] bytes = new byte[1080*960];
-                    byte[] bytes = new byte[(height+(height/2))*width];
-                    System.arraycopy(buf, 0, bytes, 0, ylen);
 
-                    //END COMPUTATION
-                    YuvImage yuvImage = new YuvImage(bytes,
+                    YuvImage yuvImage = new YuvImage(buf,
                             ImageFormat.NV21,
                             width,
                             height,
                             null);
 
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-//                    yuvImage.compressToJpeg(new Rect(0,
-//                                    0,
-//                                    width,
-//                                    height),
-//                            10,//quality
-//                            baos);
 
                     yuvImage.compressToJpeg(new Rect(0,
                                     0,
                                     width,
                                     height),
-                            25,//quality
+                            50,//quality
                             baos);
-
 
                     sensor_msgs.CompressedImage image = publisherImg.newMessage();
 
