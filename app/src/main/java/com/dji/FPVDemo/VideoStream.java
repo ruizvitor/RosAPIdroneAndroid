@@ -29,7 +29,9 @@ import java.nio.ByteOrder;
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.FlightControllerState;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.imu.IMUState;
+import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
 import dji.keysdk.FlightControllerKey;
 import dji.sdk.flightcontroller.Compass;
@@ -81,17 +83,21 @@ public class VideoStream extends AbstractNodeMain {
             flightController = ((Aircraft) DJISampleApplication.getProductInstance()).getFlightController();
 //            setIMUCallback();
 //            initCompass();
+            compass = flightController.getCompass();
+
+            android.util.Log.d(TAG,"about to fly");
 
             flightControllerState = flightController.getState();
 
-            flightController.turnOnMotors(new CommonCallbacks.CompletionCallback() {
+            flightController.startTakeoff(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError error) {
 
                     if (error == null) {
-                        android.util.Log.d(TAG, "turnOnMotors Succeeded");
+                        android.util.Log.d(TAG, "takeOff Succeeded");
 
                         (new Handler()).postDelayed(mStopMotor, 5000);//
+
 
                     } else {
                         android.util.Log.e(TAG, error.getDescription());
@@ -100,43 +106,70 @@ public class VideoStream extends AbstractNodeMain {
                 }
             });
 
+//            flightController.turnOnMotors(new CommonCallbacks.CompletionCallback() {
+//                @Override
+//                public void onResult(DJIError error) {
+//
+//                    if (error == null) {
+//                        android.util.Log.d(TAG, "turnOnMotors Succeeded");
+//
+//                        (new Handler()).postDelayed(mStopMotor, 5000);//
+//
+//                    } else {
+//                        android.util.Log.e(TAG, error.getDescription());
+//                    }
+//
+//                }
+//            });
+
         }
 
 
 
-//        connectedNode.executeCancellableLoop(new CancellableLoop() {
-//            private int sequenceNumber;
-//
-//            @Override
-//            protected void setup() {
-//                sequenceNumber = 0;
-//            }
-//
-//            @Override
-//            protected void loop() throws InterruptedException {
-////                std_msgs.String str = publisher.newMessage();
-////                str.setData("Hello world! " + sequenceNumber);
-////                publisher.publish(str);
-////                sequenceNumber++;
-//
-//                flightControllerState = flightController.getState();
-//
-//                Attitude att = flightControllerState.getAttitude();
-//
-//                android.util.Log.d(TAG, "att.pitch:" + att.pitch);
-//                android.util.Log.d(TAG, "att.yaw:" + att.yaw);
-//                android.util.Log.d(TAG, "att.roll:" + att.roll);
-//
-//                android.util.Log.d(TAG, "getTakeoffLocationAltitude:" + flightControllerState.getTakeoffLocationAltitude());
-//
-//                android.util.Log.d(TAG, "velx:" + flightControllerState.getVelocityX());
-//                android.util.Log.d(TAG, "vely:" + flightControllerState.getVelocityY());
-//                android.util.Log.d(TAG, "velz:" + flightControllerState.getVelocityZ());
-//
-////                android.util.Log.d(TAG, "north:" + getCompassHeading());
-//                Thread.sleep(100);
-//            }
-//        });
+        connectedNode.executeCancellableLoop(new CancellableLoop() {
+            private int sequenceNumber;
+
+            @Override
+            protected void setup() {
+                sequenceNumber = 0;
+            }
+
+            @Override
+            protected void loop() throws InterruptedException {
+//                std_msgs.String str = publisher.newMessage();
+//                str.setData("Hello world! " + sequenceNumber);
+//                publisher.publish(str);
+//                sequenceNumber++;
+
+                flightControllerState = flightController.getState();
+
+                Attitude att = flightControllerState.getAttitude();
+
+
+                LocationCoordinate3D loc = flightControllerState.getAircraftLocation();
+
+                android.util.Log.d(TAG,"loc.lat="+loc.getLatitude());
+                android.util.Log.d(TAG,"loc.lon="+loc.getLongitude());
+                android.util.Log.d(TAG,"loc.alt="+loc.getAltitude());
+
+                LocationCoordinate2D homeloc = flightControllerState.getHomeLocation();
+                android.util.Log.d(TAG,"homeloc.lat="+homeloc.getLatitude());
+                android.util.Log.d(TAG,"homeloc.lon="+homeloc.getLongitude());
+
+                android.util.Log.d(TAG, "att.pitch:" + att.pitch);
+                android.util.Log.d(TAG, "att.yaw:" + att.yaw);
+                android.util.Log.d(TAG, "att.roll:" + att.roll);
+
+                android.util.Log.d(TAG, "getTakeoffLocationAltitude:" + flightControllerState.getTakeoffLocationAltitude());
+
+                android.util.Log.d(TAG, "velx:" + flightControllerState.getVelocityX());
+                android.util.Log.d(TAG, "vely:" + flightControllerState.getVelocityY());
+                android.util.Log.d(TAG, "velz:" + flightControllerState.getVelocityZ());
+
+                android.util.Log.d(TAG, "north:" + getCompassHeading());
+                Thread.sleep(100);
+            }
+        });
 
 
     }
@@ -144,12 +177,13 @@ public class VideoStream extends AbstractNodeMain {
     private Runnable mStopMotor = new Runnable() {
         @Override
         public void run() {
-            flightController.turnOffMotors(new CommonCallbacks.CompletionCallback() {
+            flightController.startLanding(new CommonCallbacks.CompletionCallback() {
                 @Override
                 public void onResult(DJIError error) {
 
                     if (error == null) {
-                        android.util.Log.d(TAG, "turnOffMotors Succeeded");
+                        android.util.Log.d(TAG, "Landing Succeeded");
+
                     } else {
                         android.util.Log.e(TAG, error.getDescription());
                     }
@@ -191,12 +225,12 @@ public class VideoStream extends AbstractNodeMain {
 //        }
 //    }
 //
-//    float getCompassHeading() {
-//        if (compass != null)
-//            return compass.getHeading();
-//        else
-//            return 0;
-//    }
+    float getCompassHeading() {
+        if (compass != null)
+            return compass.getHeading();
+        else
+            return 0;
+    }
 
     public void pubMessage(java.lang.String msg) {
         std_msgs.String str = publisher.newMessage();
