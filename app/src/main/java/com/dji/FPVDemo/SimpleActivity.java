@@ -36,7 +36,7 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
 
     public SimpleActivity() {
         this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//phantom wifi
-        //this("RosDrone", "RosDrone", URI.create("http://192.168.1.104:11311/"));//dinf3
+//        this("RosDrone", "RosDrone", URI.create("http://192.168.1.20:11311/"));//phantom wifi
     }
 
     protected SimpleActivity(String notificationTicker, String notificationTitle, URI uri) {
@@ -196,7 +196,12 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         yuvFrame.get(bytes, 0, width * height);
 
         if (videoStream != null) {
-            videoStream.publishImage(bytes, width, height);
+            if(index++ % 3 == 0){
+                videoStream.publishImage(bytes, width, height);
+            }
+        }
+        if( index > 10000){
+            index = 0;
         }
     }
 

@@ -31,6 +31,10 @@ import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.FlightControllerState;
 import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.imu.IMUState;
+import dji.common.flightcontroller.virtualstick.FlightControlData;
+import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
+import dji.common.flightcontroller.virtualstick.VerticalControlMode;
+import dji.common.flightcontroller.virtualstick.YawControlMode;
 import dji.common.model.LocationCoordinate2D;
 import dji.common.util.CommonCallbacks;
 import dji.keysdk.FlightControllerKey;
@@ -47,7 +51,6 @@ public class VideoStream extends AbstractNodeMain {
 
     ConnectedNode mynode;
     Publisher<String> publisher;
-    //    Publisher<sensor_msgs.Image> publisherImg;
     Publisher<sensor_msgs.CompressedImage> publisherImg;
     Compass compass = null;
     FlightController flightController;
@@ -63,10 +66,81 @@ public class VideoStream extends AbstractNodeMain {
         mynode = connectedNode;
 
         final Log log = connectedNode.getLog();
-        Subscriber<String> subscriber = connectedNode.newSubscriber("chatter", std_msgs.String._TYPE);
+        Subscriber<String> subscriber = connectedNode.newSubscriber("djiSDK/listener", std_msgs.String._TYPE);
 
-        publisher = connectedNode.newPublisher("chatterResponse", std_msgs.String._TYPE);
+        publisher = connectedNode.newPublisher("djiSDK/flightLog", std_msgs.String._TYPE);
         publisherImg = connectedNode.newPublisher("camera/compressed", sensor_msgs.CompressedImage._TYPE);
+
+        initVirtualControl(false);
+
+
+//        connectedNode.executeCancellableLoop(new CancellableLoop() {
+//            private int sequenceNumber;
+//
+//            @Override
+//            protected void setup() {
+//                sequenceNumber = 0;
+//            }
+//
+//            @Override
+//            protected void loop() throws InterruptedException {
+////                std_msgs.String str = publisher.newMessage();
+////                str.setData("Hello world! " + sequenceNumber);
+////                publisher.publish(str);
+////                sequenceNumber++;
+//
+////                flightControllerState.setVelocityX(0.0f);
+////                flightControllerState.setVelocityY(0.0f);
+//
+//
+//
+//                flightControllerState = flightController.getState();
+//
+//                Attitude att = flightControllerState.getAttitude();
+//
+//                LocationCoordinate3D loc = flightControllerState.getAircraftLocation();
+//                LocationCoordinate2D homeloc = flightControllerState.getHomeLocation();
+//
+////                android.util.Log.d(TAG,"loc.lat="+loc.getLatitude());
+////                android.util.Log.d(TAG,"loc.lon="+loc.getLongitude());
+////                android.util.Log.d(TAG,"loc.alt="+loc.getAltitude());
+////
+////
+////                android.util.Log.d(TAG,"homeloc.lat="+homeloc.getLatitude());
+////                android.util.Log.d(TAG,"homeloc.lon="+homeloc.getLongitude());
+////
+////                android.util.Log.d(TAG, "att.pitch:" + att.pitch);
+////                android.util.Log.d(TAG, "att.yaw:" + att.yaw);
+////                android.util.Log.d(TAG, "att.roll:" + att.roll);
+////
+////                android.util.Log.d(TAG, "getTakeoffLocationAltitude:" + flightControllerState.getTakeoffLocationAltitude());
+////
+////                android.util.Log.d(TAG, "velx:" + flightControllerState.getVelocityX());
+////                android.util.Log.d(TAG, "vely:" + flightControllerState.getVelocityY());
+////                android.util.Log.d(TAG, "velz:" + flightControllerState.getVelocityZ());
+////
+////                android.util.Log.d(TAG, "north:" + getCompassHeading());
+//
+//                java.lang.String logmsg = "\n";
+//                logmsg = logmsg+"loc.lat="+loc.getLatitude()+"\n";
+//                logmsg = logmsg+"loc.lon="+loc.getLongitude()+"\n";
+//                logmsg = logmsg+"loc.alt="+loc.getAltitude()+"\n";
+//                logmsg = logmsg+"homeloc.lat="+homeloc.getLatitude()+"\n";
+//                logmsg = logmsg+"homeloc.lon="+homeloc.getLongitude()+"\n";
+//                logmsg = logmsg+"att.pitch:" + att.pitch+"\n";
+//                logmsg = logmsg+"att.yaw:" + att.yaw+"\n";
+//                logmsg = logmsg+"att.roll:" + att.roll+"\n";
+//                logmsg = logmsg+"getTakeoffLocationAltitude:" + flightControllerState.getTakeoffLocationAltitude()+"\n";
+//                logmsg = logmsg+"velx:" + flightControllerState.getVelocityX()+"\n";
+//                logmsg = logmsg+"vely:" + flightControllerState.getVelocityY()+"\n";
+//                logmsg = logmsg+"velz:" + flightControllerState.getVelocityZ()+"\n";
+//                logmsg = logmsg+"north:" + getCompassHeading()+"\n";
+//
+//
+//                pubMessage(logmsg);
+//                Thread.sleep(100);
+//            }
+//        });
 
 
         subscriber.addMessageListener(new MessageListener<String>() {
@@ -74,103 +148,16 @@ public class VideoStream extends AbstractNodeMain {
             public void onNewMessage(std_msgs.String message) {
 
                 log.info("I heard: \"" + message.getData() + "\"");
-            }
-        });
-
-//        imu = new IMUState();
-
-        if (ModuleVerificationUtil.isFlightControllerAvailable()) {
-            flightController = ((Aircraft) DJISampleApplication.getProductInstance()).getFlightController();
-//            setIMUCallback();
-//            initCompass();
-            compass = flightController.getCompass();
-
-            android.util.Log.d(TAG,"about to fly");
-
-            flightControllerState = flightController.getState();
-
-            flightController.startTakeoff(new CommonCallbacks.CompletionCallback() {
-                @Override
-                public void onResult(DJIError error) {
-
-                    if (error == null) {
-                        android.util.Log.d(TAG, "takeOff Succeeded");
-
-                        (new Handler()).postDelayed(mStopMotor, 5000);//
-
-
-                    } else {
-                        android.util.Log.e(TAG, error.getDescription());
-                    }
-
+                if (message.getData().equals("test")) {
+                    pubMessage("Starting Flight");
+                    testFlight();
                 }
-            });
-
-//            flightController.turnOnMotors(new CommonCallbacks.CompletionCallback() {
-//                @Override
-//                public void onResult(DJIError error) {
-//
-//                    if (error == null) {
-//                        android.util.Log.d(TAG, "turnOnMotors Succeeded");
-//
-//                        (new Handler()).postDelayed(mStopMotor, 5000);//
-//
-//                    } else {
-//                        android.util.Log.e(TAG, error.getDescription());
-//                    }
-//
-//                }
-//            });
-
-        }
-
-
-
-        connectedNode.executeCancellableLoop(new CancellableLoop() {
-            private int sequenceNumber;
-
-            @Override
-            protected void setup() {
-                sequenceNumber = 0;
-            }
-
-            @Override
-            protected void loop() throws InterruptedException {
-//                std_msgs.String str = publisher.newMessage();
-//                str.setData("Hello world! " + sequenceNumber);
-//                publisher.publish(str);
-//                sequenceNumber++;
-
-                flightControllerState = flightController.getState();
-
-                Attitude att = flightControllerState.getAttitude();
-
-
-                LocationCoordinate3D loc = flightControllerState.getAircraftLocation();
-
-                android.util.Log.d(TAG,"loc.lat="+loc.getLatitude());
-                android.util.Log.d(TAG,"loc.lon="+loc.getLongitude());
-                android.util.Log.d(TAG,"loc.alt="+loc.getAltitude());
-
-                LocationCoordinate2D homeloc = flightControllerState.getHomeLocation();
-                android.util.Log.d(TAG,"homeloc.lat="+homeloc.getLatitude());
-                android.util.Log.d(TAG,"homeloc.lon="+homeloc.getLongitude());
-
-                android.util.Log.d(TAG, "att.pitch:" + att.pitch);
-                android.util.Log.d(TAG, "att.yaw:" + att.yaw);
-                android.util.Log.d(TAG, "att.roll:" + att.roll);
-
-                android.util.Log.d(TAG, "getTakeoffLocationAltitude:" + flightControllerState.getTakeoffLocationAltitude());
-
-                android.util.Log.d(TAG, "velx:" + flightControllerState.getVelocityX());
-                android.util.Log.d(TAG, "vely:" + flightControllerState.getVelocityY());
-                android.util.Log.d(TAG, "velz:" + flightControllerState.getVelocityZ());
-
-                android.util.Log.d(TAG, "north:" + getCompassHeading());
-                Thread.sleep(100);
+                if (message.getData().equals("hover")) {
+                    initVirtualControl(true);
+//                    pubMessage("Starting hover");
+                }
             }
         });
-
 
     }
 
@@ -183,6 +170,7 @@ public class VideoStream extends AbstractNodeMain {
 
                     if (error == null) {
                         android.util.Log.d(TAG, "Landing Succeeded");
+                        pubMessage("Starting Landing");
 
                     } else {
                         android.util.Log.e(TAG, error.getDescription());
@@ -192,6 +180,126 @@ public class VideoStream extends AbstractNodeMain {
             });
         }
     };
+
+
+    private Runnable mMotorCommand = new Runnable() {
+        @Override
+        public void run() {
+            sendCommand(0.0f, 0.0f, 0.0f, 0.5f, 30);
+        }
+    };
+
+    void initVirtualControl(boolean state) {
+        if (state == true) {
+            if (ModuleVerificationUtil.isFlightControllerAvailable()) {
+                flightController = ((Aircraft) DJISampleApplication.getProductInstance()).getFlightController();
+                compass = flightController.getCompass();
+
+                android.util.Log.d(TAG, "about to fly");
+
+                flightControllerState = flightController.getState();
+
+                flightController.setVirtualStickModeEnabled(true, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError error) {
+
+                        if (error == null) {
+                            android.util.Log.d(TAG, "setVirtualStickModeEnabled true successful");
+                            pubMessage("setVirtualStickModeEnabled true successful");
+                            flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);//set to m/s
+                            flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);//set to m/s
+                            flightController.setVerticalControlMode(VerticalControlMode.POSITION);//set m to ground
+
+                            hoverProcedure();
+
+                        } else {
+                            android.util.Log.e(TAG, error.getDescription());
+                        }
+
+                    }
+                });
+            }
+        } else {
+            if (ModuleVerificationUtil.isFlightControllerAvailable()) {
+                flightController = ((Aircraft) DJISampleApplication.getProductInstance()).getFlightController();
+                compass = flightController.getCompass();
+
+                android.util.Log.d(TAG, "about to fly");
+
+                flightControllerState = flightController.getState();
+            }
+        }
+
+    }
+
+    void hoverProcedure() {
+
+        flightController.startTakeoff(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError error) {
+
+                if (error == null) {
+                    android.util.Log.d(TAG, "takeOff Succeeded");
+
+                    (new Handler()).postDelayed(mMotorCommand, 5000);//
+
+                } else {
+                    android.util.Log.e(TAG, error.getDescription());
+                }
+
+            }
+        });
+
+
+    }
+
+    void sendCommand(final float roll, final float pitch, final float yaw, final float verticalThrottle, final int iter) {
+        android.util.Log.d(TAG, "iter:" + iter);
+        if (iter == 0) {
+            //start landing
+            flightController.startLanding(new CommonCallbacks.CompletionCallback() {
+                @Override
+                public void onResult(DJIError error) {
+
+                    if (error == null) {
+                        android.util.Log.d(TAG, "Landing Succeeded");
+                        pubMessage("Starting Landing");
+
+                    } else {
+                        android.util.Log.e(TAG, error.getDescription());
+                    }
+
+                }
+            });
+
+        } else {
+            if (flightController.isVirtualStickControlModeAvailable()) {
+
+                FlightControlData controlData = new FlightControlData(roll, pitch, yaw, verticalThrottle);//pitch, roll, yaw, verticalThrottle
+                flightController.sendVirtualStickFlightControlData(controlData, new CommonCallbacks.CompletionCallback() {
+                    @Override
+                    public void onResult(DJIError error) {
+
+                        if (error == null) {
+                            android.util.Log.d(TAG, "command sent");
+//                            (new Handler()).postDelayed(mMotorCommand, 100);//
+
+                            (new Handler()).postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    sendCommand(roll, pitch, yaw, verticalThrottle, iter - 1);
+                                }
+                            }, 250);
+
+                        } else {
+                            android.util.Log.e(TAG, error.getDescription());
+                        }
+
+                    }
+                });
+            }
+        }
+    }
 
 
 //    void setIMUCallback() {
@@ -215,7 +323,7 @@ public class VideoStream extends AbstractNodeMain {
 //    }
 
 
-//    void initCompass() {
+    //    void initCompass() {
 //        if (ModuleVerificationUtil.isFlightControllerAvailable()) {
 //            flightController = ((Aircraft) DJISampleApplication.getProductInstance()).getFlightController();
 //
@@ -225,6 +333,25 @@ public class VideoStream extends AbstractNodeMain {
 //        }
 //    }
 //
+    void testFlight() {
+        flightController.startTakeoff(new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError error) {
+
+                if (error == null) {
+                    android.util.Log.d(TAG, "takeOff Succeeded");
+
+                    (new Handler()).postDelayed(mStopMotor, 5000);//
+
+
+                } else {
+                    android.util.Log.e(TAG, error.getDescription());
+                }
+
+            }
+        });
+    }
+
     float getCompassHeading() {
         if (compass != null)
             return compass.getHeading();
