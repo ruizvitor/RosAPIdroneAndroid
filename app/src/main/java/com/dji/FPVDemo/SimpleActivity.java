@@ -196,11 +196,11 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         yuvFrame.get(bytes, 0, width * height);
 
         if (videoStream != null) {
-            if(index++ % 3 == 0){
+            if(index++ % 3 == 0){//skip frame logic
                 videoStream.publishImage(bytes, width, height);
             }
         }
-        if( index > 10000){
+        if( index > 10000){//avoid index overflow
             index = 0;
         }
     }
