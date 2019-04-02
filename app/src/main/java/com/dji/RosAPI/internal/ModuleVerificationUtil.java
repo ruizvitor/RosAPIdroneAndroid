@@ -1,8 +1,8 @@
-package com.dji.FPVDemo.internal;
+package com.dji.RosAPI.internal;
 
 import android.support.annotation.Nullable;
 
-import com.dji.FPVDemo.internal.controller.DJISampleApplication;
+import com.dji.RosAPI.internal.controller.DJISampleApplication;
 
 import dji.common.product.Model;
 import dji.sdk.accessory.AccessoryAggregation;

@@ -1,4 +1,4 @@
-package com.dji.FPVDemo;
+package com.dji.RosAPI;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -153,7 +153,7 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
 
     private void notifyStatusChange() {
 
-        final BaseProduct product = FPVDemoApplication.getProductInstance();
+        final BaseProduct product = RosAPIApplication.getProductInstance();
         Log.d(TAG, "notifyStatusChange: " + (product == null ? "Disconnect" : (product.getModel() == null ? "null model" : product.getModel().name())));
 
 

@@ -1,4 +1,4 @@
-package com.dji.FPVDemo.internal.controller;
+package com.dji.RosAPI.internal.controller;
 
 
 import android.app.Application;

@@ -1,9 +1,9 @@
-package com.dji.FPVDemo;
+package com.dji.RosAPI;
 
 import android.os.Handler;
 
-import com.dji.FPVDemo.internal.ModuleVerificationUtil;
-import com.dji.FPVDemo.internal.controller.DJISampleApplication;
+import com.dji.RosAPI.internal.ModuleVerificationUtil;
+import com.dji.RosAPI.internal.controller.DJISampleApplication;
 
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
