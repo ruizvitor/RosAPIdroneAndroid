@@ -1,7 +1,7 @@
 # Ros API drone Android
 This project is intended as a bridge between the DJI Mobile SDK and the Robot Operating System(ROS), allowing broader use of the DJI Phantom 3 Standard drone capabilities.
 <p align="center">
-<img src="./RosAPI.svg">
+<img src="./docs/RosAPI.svg">
 </p>
 
 ## Necessary Software:
@@ -36,7 +36,7 @@ ip address
 ```
 
 Illustrative layout of multiple terminal windows:
-<img src="./exampleTerminal.png">
+<img src="./docs/exampleTerminal.png">
 
 * in each terminal run
 ```
