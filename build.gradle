@@ -14,9 +14,6 @@
  * the License.
  */
 
-//task wrapper(type: Wrapper) {
-//    gradleVersion = '2.14.1'
-//}
 
 buildscript {
     apply from: "https://github.com/rosjava/android_core/raw/kinetic/buildscript.gradle"
@@ -28,17 +25,6 @@ buildscript {
         maven { url 'https://maven.fabric.io/public' }
     }
 }
-
-//buildscript {
-//    repositories {
-//        maven {
-//            url 'https://maven.google.com'
-//        }
-//        jcenter()
-//        maven { url 'https://maven.fabric.io/public' }
-//    }
-//    //
-//}
 
 apply plugin: 'catkin'
 

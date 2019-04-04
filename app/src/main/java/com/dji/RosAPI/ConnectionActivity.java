@@ -1,4 +1,4 @@
-package com.dji.FPVDemo;
+package com.dji.RosAPI;
 
 import android.Manifest;
 import android.app.Activity;
@@ -69,7 +69,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
         // Register the broadcast receiver for receiving the device connection's changes.
         IntentFilter filter = new IntentFilter();
-        filter.addAction(FPVDemoApplication.FLAG_CONNECTION_CHANGE);
+        filter.addAction(RosAPIApplication.FLAG_CONNECTION_CHANGE);
         registerReceiver(mReceiver, filter);
     }
 
@@ -224,7 +224,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     };
 
     private void refreshSDKRelativeUI() {
-        BaseProduct mProduct = FPVDemoApplication.getProductInstance();
+        BaseProduct mProduct = RosAPIApplication.getProductInstance();
 
         if (null != mProduct && mProduct.isConnected()) {
 
@@ -255,7 +255,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
-                Intent intent = new Intent(this, Mix.class);
+                Intent intent = new Intent(this, SimpleActivity.class);
                 startActivity(intent);
                 break;
             }

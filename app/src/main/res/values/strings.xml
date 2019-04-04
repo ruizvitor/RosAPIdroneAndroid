@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">ImportSDKDemo</string>
-    <string name="title_activity_connection">ConnectionActivity</string>
+    <string name="app_name">RosAPI</string>
+    <string name="title_activity_connection">RosAPI</string>
     <string name="action_settings">Settings</string>
     <string name="disconnected">Disconnected</string>
     <string name="product_information">Product Information</string>
