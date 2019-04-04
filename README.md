@@ -1,13 +1,17 @@
 # Ros API drone Android
-This project is intended as bridge of the DJI Mobile SDK to the Robot Operating System(ROS) allowing a more broad use of the DJI Phantom 3 Standard drone capabilities.
+This project is intended as a bridge between the DJI Mobile SDK and the Robot Operating System(ROS), allowing broader use of the DJI Phantom 3 Standard drone capabilities.
+<p align="center">
+<img src="./RosAPI.svg">
+</p>
 
 ## Necessary Software:
 * Python 2.7
-* Numpy #For image streaming
-* OpenCV 2 #For image streaming
-* [Rospy](http://wiki.ros.org/rospy)
 * [Ros melodic](http://wiki.ros.org/melodic)
+* [Rospy](http://wiki.ros.org/rospy)
 * Android Studio
+* [Numpy](http://www.numpy.org/) #Optional, only necessary for image streaming
+* [OpenCV 2](https://opencv.org/) #Optional, only necessary for image streaming
+* OpenCV-Python #Optional, only necessary for image streaming
 
 ## Recommend Software
 * [Terminator](https://terminator-gtk3.readthedocs.io/en/latest/)
@@ -42,7 +46,7 @@ In the Android device:
 If it is your first time launching the app, connect to a reliable wifi connection, accept the permissions, wait for the DJI registration process to finish.
 After the initial setup or in the following launches do:
 * Connect to the drone internal wifi network
-* Check if the name Phantom 3 Standand appears
+* Check if the name Phantom 3 Standard appears
 * Click the connect button
 * If your wifi configuration is rightly setup and the roscore is running in the correct ip, your ROSJAVA nodes should be operational at this point already.
 * To kill the ROSJAVA nodes exit the SimpleActivity by pressing the back button
