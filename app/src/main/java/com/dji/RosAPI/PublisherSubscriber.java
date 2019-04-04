@@ -23,9 +23,9 @@ import std_msgs.String;
 
 import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
 
-public class VideoStream extends AbstractNodeMain {
+public class PublisherSubscriber extends AbstractNodeMain {
 
-    private static final java.lang.String TAG = VideoStream.class.getName();
+    private static final java.lang.String TAG = PublisherSubscriber.class.getName();
 
     ConnectedNode mynode;
     Publisher<String> publisher;
@@ -34,7 +34,7 @@ public class VideoStream extends AbstractNodeMain {
 
     @Override
     public GraphName getDefaultNodeName() {
-        return GraphName.of("rosjava/videoStream");
+        return GraphName.of("rosjava/publisherSubscriber");
     }
 
     @Override
@@ -55,7 +55,8 @@ public class VideoStream extends AbstractNodeMain {
 
                 log.info("I heard: \"" + message.getData() + "\"");
                 if (message.getData().equals("hover")) {
-                    flightHelper.hoverProcedure();
+//                    flightHelper.hoverProcedure();
+                    flightHelper.hoverProcedureAdvanced();
                 }
             }
         });
@@ -91,7 +92,7 @@ public class VideoStream extends AbstractNodeMain {
                                     0,
                                     width,
                                     height),
-                            50,//quality
+                            90,//quality
                             baos);
 
                     sensor_msgs.CompressedImage image = publisherImg.newMessage();

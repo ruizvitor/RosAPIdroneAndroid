@@ -32,15 +32,21 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         START ROS CONFIG
      */
 
-    VideoStream videoStream = null;
+    PublisherSubscriber publisherSubscriber = null;
 
     public SimpleActivity() {
-        this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//phantom wifi
-//        this("RosDrone", "RosDrone", URI.create("http://192.168.1.20:11311/"));//phantom wifi
+//        this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//pre configured ip phantom wifi
+        this("RosDrone", "RosDrone", URI.create("http://192.168.1.20:11311/"));//pre configured ip phantom wifi
+//        this("RosDrone", "RosDrone");//call ros ip activity config
+
     }
 
-    protected SimpleActivity(String notificationTicker, String notificationTitle, URI uri) {
+    protected SimpleActivity(String notificationTicker, String notificationTitle, URI uri) {//skip ros ip config
         super(notificationTicker, notificationTitle, uri);
+    }
+
+    protected SimpleActivity(String notificationTicker, String notificationTitle) {//call ros ip activity config
+        super(notificationTicker, notificationTitle);
     }
 
     /**
@@ -57,9 +63,9 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
     protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
 
-        videoStream = new VideoStream();
-        nodeConfiguration.setNodeName("videoStream");
-        nodeMainExecutor.execute(videoStream, nodeConfiguration);
+        publisherSubscriber = new PublisherSubscriber();
+        nodeConfiguration.setNodeName("publisherSubscriber");
+        nodeMainExecutor.execute(publisherSubscriber, nodeConfiguration);
     }
     /*
         END ROS CONFIG
@@ -69,7 +75,6 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
     private SurfaceView videostreamPreviewSf;
     private SurfaceHolder videostreamPreviewSh;
     private SurfaceHolder.Callback surfaceCallback;
-    private VideoFeeder.VideoFeed standardVideoFeeder;
     protected VideoFeeder.VideoDataListener mReceivedVideoDataListener = null;
     private DJICodecManager mCodecManager;
     private Camera mCamera;
@@ -99,8 +104,8 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
 //        VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
 //        VideoFeeder.getInstance().setTranscodingDataRate(20.0f);
-        VideoFeeder.getInstance().setTranscodingDataRate(2.0f);
 //        VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
+        VideoFeeder.getInstance().setTranscodingDataRate(2.0f);
         updateUIVisibility();
     }
 
@@ -195,9 +200,9 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         final byte[] bytes = new byte[(width+(width/2)) * height];
         yuvFrame.get(bytes, 0, width * height);
 
-        if (videoStream != null) {
-            if(index++ % 3 == 0){//skip frame logic
-                videoStream.publishImage(bytes, width, height);
+        if (publisherSubscriber != null) {
+            if(index++ % 2 == 0){//skip frame logic
+                publisherSubscriber.publishImage(bytes, width, height);
             }
         }
         if( index > 10000){//avoid index overflow
