@@ -28,11 +28,16 @@ In the Android Studio:
 
 # Running the full system:
 In the host machine:
-* connect to the drone internal wifi network
-* check your ip address using:
+* Open several terminal windows, one for the roscore, and one for each rostopic application 
+* Connect to the drone internal wifi network
+* Check your ip address using:
 ```
 ip address
 ```
+
+Illustrative layout of multiple terminal windows:
+<img src="./exampleTerminal.png">
+
 * in each terminal run
 ```
 export ROS_HOSTNAME=yourIPhere
