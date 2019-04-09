@@ -6,6 +6,8 @@ import android.support.annotation.NonNull;
 import com.dji.RosAPI.internal.ModuleVerificationUtil;
 import com.dji.RosAPI.internal.controller.DJISampleApplication;
 
+import org.ros.node.topic.Publisher;
+
 import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ControlMode;
@@ -18,12 +20,16 @@ import dji.common.flightcontroller.virtualstick.YawControlMode;
 import dji.common.util.CommonCallbacks;
 import dji.sdk.flightcontroller.FlightController;
 import dji.sdk.products.Aircraft;
+import std_msgs.String;
 
 public class FlightHelper {
 
     private static final java.lang.String TAG = FlightHelper.class.getName();
-    private static final java.lang.String DEBUGFLYTAG = "DebugFly";
+    private static final java.lang.String FlightLogTAG = "FlightLog";
     FlightController flightController = null;
+    Publisher<String> publisherFlightLog = null;
+    Publisher<String> publisherCmdFlightDebug = null;
+    public CmdCallback cmdCallbackDefault = null;
 
     interface CmdCallback {
         void onCompleted(boolean success);
@@ -46,6 +52,19 @@ public class FlightHelper {
         initFlightController();
     }
 
+    public FlightHelper(Publisher<String> pub, Publisher<String> pubDebug) {
+        publisherFlightLog = pub;
+        publisherCmdFlightDebug = pubDebug;
+        initFlightController();
+    }
+
+    void pubMessage(Publisher<String> pub, java.lang.String msg) {
+        if (pub != null) {
+            std_msgs.String str = pub.newMessage();
+            str.setData(msg);
+            pub.publish(str);
+        }
+    }
 
     void initFlightController() {
 
@@ -58,15 +77,33 @@ public class FlightHelper {
                 public void onUpdate(@NonNull FlightControllerState flightControllerState) {
                     Attitude attitude = flightControllerState.getAttitude();
 
-                    android.util.Log.d(DEBUGFLYTAG, "roll=" + attitude.roll);
-                    android.util.Log.d(DEBUGFLYTAG, "pitc=" + attitude.pitch);
-                    android.util.Log.d(DEBUGFLYTAG, "yaw==" + attitude.yaw);
-                    android.util.Log.d(DEBUGFLYTAG, "velX=" + flightControllerState.getVelocityX());
-                    android.util.Log.d(DEBUGFLYTAG, "velY=" + flightControllerState.getVelocityY());
-                    android.util.Log.d(DEBUGFLYTAG, "velZ=" + flightControllerState.getVelocityZ());
+                    java.lang.String msg = "";
+
+                    msg = msg + "roll=" + attitude.roll + " ";
+                    msg = msg + "pitch=" + attitude.pitch + " ";
+                    msg = msg + "yaw=" + attitude.yaw + " ";
+                    msg = msg + "velX=" + flightControllerState.getVelocityX() + " ";
+                    msg = msg + "velY=" + flightControllerState.getVelocityY() + " ";
+                    msg = msg + "velZ=" + flightControllerState.getVelocityZ() + " ";
+
+                    android.util.Log.d(FlightLogTAG, msg);
+
+                    pubMessage(publisherFlightLog, msg);
 
                 }
             });
+
+
+            cmdCallbackDefault = new CmdCallback() {
+                @Override
+                public void onCompleted(boolean success) {
+                    if (!success) {
+                        android.util.Log.e(TAG, "an error has occurred on cmdCallbackDefault");
+                        pubMessage(publisherCmdFlightDebug, "an error has occurred on cmdCallbackDefault");
+                    }
+                }
+            };
+
         }
 
     }
@@ -79,9 +116,11 @@ public class FlightHelper {
 
                 if (error == null) {
                     android.util.Log.d(TAG, "setNovice true successful");
+                    pubMessage(publisherCmdFlightDebug, "setNovice true successful");
                     cmdCallback.onCompleted(true);
                 } else {
                     android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
                     cmdCallback.onCompleted(false);
                 }
 
@@ -98,13 +137,13 @@ public class FlightHelper {
 
                 if (error == null) {
                     android.util.Log.d(TAG, "setVirtualStickModeEnabled true successful");
-
+                    pubMessage(publisherCmdFlightDebug, "setVirtualStickModeEnabled true successful");
                     flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);//set flight relative to body frame
 
                     flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);//set to m/s
                     flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);//set to degrees/s
 
-//                    flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);//set to degrees
+                    //flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);//set to degrees
 
                     flightController.setVerticalControlMode(VerticalControlMode.POSITION);//set m to ground
 
@@ -112,6 +151,7 @@ public class FlightHelper {
                     cmdCallback.onCompleted(true);
                 } else {
                     android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
                     cmdCallback.onCompleted(false);
                 }
 
@@ -126,9 +166,11 @@ public class FlightHelper {
             public void onResult(DJIError error) {
                 if (error == null) {
                     android.util.Log.d(TAG, "takeOff Succeeded");
+                    pubMessage(publisherCmdFlightDebug, "takeOff Succeeded");
                     cmdCallback.onCompleted(true);
                 } else {
                     android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
                     cmdCallback.onCompleted(false);
                 }
             }
@@ -141,9 +183,11 @@ public class FlightHelper {
             public void onResult(DJIError error) {
                 if (error == null) {
                     android.util.Log.d(TAG, "cancelTakeOff Succeeded");
+                    pubMessage(publisherCmdFlightDebug, "cancelTakeOff Succeeded");
                     cmdCallback.onCompleted(true);
                 } else {
                     android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
                     cmdCallback.onCompleted(false);
                 }
             }
@@ -156,9 +200,11 @@ public class FlightHelper {
             public void onResult(DJIError error) {
                 if (error == null) {
                     android.util.Log.d(TAG, "landing Succeeded");
+                    pubMessage(publisherCmdFlightDebug, "landing Succeeded");
                     cmdCallback.onCompleted(true);
                 } else {
                     android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
                     cmdCallback.onCompleted(false);
                 }
             }
@@ -175,9 +221,11 @@ public class FlightHelper {
                 public void onResult(DJIError error) {
                     if (error == null) {
                         android.util.Log.d(TAG, "command sent");
+                        pubMessage(publisherCmdFlightDebug, "command sent");
                         cmdCallback.onCompleted(true);
                     } else {
                         android.util.Log.e(TAG, error.getDescription());
+                        pubMessage(publisherCmdFlightDebug, error.getDescription());
                         cmdCallback.onCompleted(false);
                     }
                 }
@@ -198,6 +246,7 @@ public class FlightHelper {
             public void onCompleted(boolean success) {
                 if (!success) {
                     android.util.Log.e(TAG, "an error has occurred in startLanding");
+                    pubMessage(publisherCmdFlightDebug, "an error has occurred in startLanding");
                 }
             }
         };
@@ -207,7 +256,9 @@ public class FlightHelper {
             public void onCompleted(boolean success) {
                 if (!success) {
                     android.util.Log.e(TAG, "an error has occurred in sendCommand");
+                    pubMessage(publisherCmdFlightDebug, "an error has occurred in sendCommand");
                     android.util.Log.e(TAG, "starting emergency landing!!!");
+                    pubMessage(publisherCmdFlightDebug, "starting emergency landing!!!");
                     startLanding(startLandingCallback);
                 }
             }
@@ -223,7 +274,8 @@ public class FlightHelper {
                     handler.postDelayed(new RunnableLoop(200) {//10s of hovering 200*50 == 10000 milliseconds
                         @Override
                         public void run() {
-                            android.util.Log.d(TAG, "this.index=" + this.index);
+                            android.util.Log.d(TAG, "cmdLoopIndex=" + this.index);
+                            pubMessage(publisherCmdFlightDebug, "cmdLoopIndex=" + this.index);
                             if (this.index == 0) {
                                 startLanding(startLandingCallback);
                             } else {
@@ -237,6 +289,7 @@ public class FlightHelper {
 
                 } else {
                     android.util.Log.e(TAG, "an error has occurred in cancelTakeOff");
+                    pubMessage(publisherCmdFlightDebug, "an error has occurred in cancelTakeOff");
                 }
             }
         };
@@ -256,6 +309,7 @@ public class FlightHelper {
 
                 } else {
                     android.util.Log.e(TAG, "an error has occurred in startTakeOff");
+                    pubMessage(publisherCmdFlightDebug, "an error has occurred in startTakeOff");
                 }
             }
         };
@@ -267,6 +321,7 @@ public class FlightHelper {
                     startTakeOff(startTakeOffCallback);
                 } else {
                     android.util.Log.e(TAG, "an error has occurred in initVirtualControl");
+                    pubMessage(publisherCmdFlightDebug, "an error has occurred in initVirtualControl");
                 }
             }
         };

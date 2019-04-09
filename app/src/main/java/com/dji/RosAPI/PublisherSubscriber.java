@@ -28,9 +28,12 @@ public class PublisherSubscriber extends AbstractNodeMain {
     private static final java.lang.String TAG = PublisherSubscriber.class.getName();
 
     ConnectedNode mynode;
-    Publisher<String> publisher;
+//    Publisher<String> publisher;
+    Publisher<String> publisherCmdFlightDebug;
+    Publisher<String> publisherFlightLog;
     Publisher<sensor_msgs.CompressedImage> publisherImg;
     FlightHelper flightHelper = null;
+
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -44,30 +47,54 @@ public class PublisherSubscriber extends AbstractNodeMain {
         final Log log = connectedNode.getLog();
         Subscriber<String> subscriber = connectedNode.newSubscriber("djiSDK/listener", std_msgs.String._TYPE);
 
-        publisher = connectedNode.newPublisher("djiSDK/flightLog", std_msgs.String._TYPE);
+        publisherFlightLog = connectedNode.newPublisher("djiSDK/flightLog", std_msgs.String._TYPE);
+        publisherCmdFlightDebug = connectedNode.newPublisher("djiSDK/cmdFlightDebug", std_msgs.String._TYPE);
+//        publisher = connectedNode.newPublisher("djiSDK/somethingElse", std_msgs.String._TYPE);
         publisherImg = connectedNode.newPublisher("camera/compressed", sensor_msgs.CompressedImage._TYPE);
 
-        flightHelper = new FlightHelper();
+        flightHelper = new FlightHelper(publisherFlightLog, publisherCmdFlightDebug);
 
         subscriber.addMessageListener(new MessageListener<String>() {
             @Override
             public void onNewMessage(std_msgs.String message) {
+                //IMPLEMENT Subscriber logic here
 
-                log.info("I heard: \"" + message.getData() + "\"");
-                if (message.getData().equals("hover")) {
-//                    flightHelper.hoverProcedure();
+                java.lang.String[] args = message.getData().split(" ");
+
+                if (args[0].equals("hover")) {//high level example of chain of commands
                     flightHelper.hoverProcedureAdvanced();
                 }
+                if (args[0].equals("initVirtualControl")) {
+                    flightHelper.initVirtualControl(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
+                }
+                if (args[0].equals("startTakeOff")) {
+                    flightHelper.startTakeOff(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
+                }
+                if (args[0].equals("cancelTakeOff")) {
+                    flightHelper.cancelTakeOff(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
+                }
+                if (args[0].equals("sendCommand")) {
+                    if (args.length == 5) {
+                        flightHelper.sendCommand(flightHelper.cmdCallbackDefault, Float.parseFloat(args[1]), Float.parseFloat(args[2]), Float.parseFloat(args[3]), Float.parseFloat(args[4]));//implement your own cmdCallback for more advanced op
+                    } else {
+                        pubMessageGeneric(publisherCmdFlightDebug, "sendCommand does not have enough arguments");
+                    }
+                }
+                if (args[0].equals("startLanding")) {
+                    flightHelper.startLanding(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
+                }
+                //END OF IMPLEMENT Subscriber logic
             }
         });
 
     }
 
-
-    public void pubMessage(java.lang.String msg) {
-        std_msgs.String str = publisher.newMessage();
-        str.setData(msg);
-        publisher.publish(str);
+    public void pubMessageGeneric(Publisher<String> pub, java.lang.String msg) {
+        if (pub != null) {
+            std_msgs.String str = pub.newMessage();
+            str.setData(msg);
+            pub.publish(str);
+        }
     }
 
 
