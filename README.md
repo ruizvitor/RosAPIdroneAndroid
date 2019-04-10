@@ -17,6 +17,11 @@ This project is intended as a bridge between the DJI Mobile SDK and the Robot Op
 * [Terminator](https://terminator-gtk3.readthedocs.io/en/latest/)
 
 ## Getting Started
+
+Grab a released compiled apk at:
+[Releases](https://github.com/ruizvitor/RosAPIdroneAndroid/releases)
+or
+
 ```
 git clone https://github.com/ruizvitor/RosAPIdroneAndroid.git
 git clone https://github.com/ruizvitor/rosHostApi.git
@@ -92,6 +97,7 @@ python listener.py
 
 # Useful Links:
 
+* [Overview presentation](https://github.com/ruizvitor/RosAPIdroneAndroid/tree/master/docs/overview_rosdrone_api.pdf)
 * [Build and run your app in android studio](https://developer.android.com/studio/run)
 * [DJI Developer Documentation](https://developer.dji.com/mobile-sdk/documentation/introduction/index.html)
 * [Mobile SDK android API reference](https://developer.dji.com/api-reference/android-api/Components/SDKManager/DJISDKManager.html)
