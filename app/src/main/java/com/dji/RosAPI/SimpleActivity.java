@@ -1,10 +1,13 @@
 package com.dji.RosAPI;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.widget.EditText;
+import android.widget.TextView;
 
 
 import org.ros.android.RosActivity;
@@ -24,9 +27,11 @@ import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
 
-public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDataCallback {
+public class SimpleActivity extends MyRosActivity implements DJICodecManager.YuvDataCallback {
 
     private static final java.lang.String TAG = SimpleActivity.class.getName();
+    String ip = "http://192.168.1.20:11311/";
+    private TextView mText;
 
     /*
         START ROS CONFIG
@@ -34,19 +39,13 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
 
     PublisherSubscriber publisherSubscriber = null;
 
+
     public SimpleActivity() {
-//        this("RosDrone", "RosDrone", URI.create("http://192.168.1.21:11311/"));//pre configured ip phantom wifi
-        this("RosDrone", "RosDrone", URI.create("http://192.168.1.20:11311/"));//pre configured ip phantom wifi
-//        this("RosDrone", "RosDrone");//call ros ip activity config
-
+        this(URI.create("http://192.168.1.20:11311/"));//pre configured ip phantom wifi
     }
 
-    protected SimpleActivity(String notificationTicker, String notificationTitle, URI uri) {//skip ros ip config
-        super(notificationTicker, notificationTitle, uri);
-    }
-
-    protected SimpleActivity(String notificationTicker, String notificationTitle) {//call ros ip activity config
-        super(notificationTicker, notificationTitle);
+    protected SimpleActivity(URI uri) {
+        super(uri);
     }
 
     /**
@@ -55,7 +54,23 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        Intent intent = getIntent();
+        ip = intent.getStringExtra("ipParam");
+
+        android.util.Log.d(TAG, ip);
+
+        configMyROSActivity(URI.create(ip));
+
         setContentView(R.layout.activity_mix);
+        mText = (TextView) findViewById(R.id.rosOnline);
+
+        if (publisherSubscriber != null) {
+            mText.setText("ROS_MASTER_URI: " + getMasterUri());
+        } else {
+            mText.setText("ROS_MASTER_URI: " + ip);
+        }
+
         initUi();
     }
 
@@ -63,7 +78,7 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
     protected void init(NodeMainExecutor nodeMainExecutor) {
         NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
 
-        publisherSubscriber = new PublisherSubscriber();
+        publisherSubscriber = new PublisherSubscriber(this);
         nodeConfiguration.setNodeName("publisherSubscriber");
         nodeMainExecutor.execute(publisherSubscriber, nodeConfiguration);
     }
@@ -86,8 +101,15 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
     @Override
     protected void onResume() {
         super.onResume();
-        initPreviewerSurfaceView();
-        notifyStatusChange();
+
+        if (publisherSubscriber != null) {
+            mText.setText("ROS_MASTER_URI: " + getMasterUri());
+        } else {
+            mText.setText("ROS_MASTER_URI: " + ip);
+        }
+
+//        notifyStatusChange();
+//        initPreviewerSurfaceView();
     }
 
     @Override
@@ -100,6 +122,28 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
         super.onDestroy();
     }
 
+    public void startStreaming() {
+//        setContentView(R.layout.activity_mix);
+//        initUi();
+//        notifyStatusChange();
+//        initPreviewerSurfaceView();
+
+        initPreviewerSurfaceView();
+    }
+
+    public void stopStreaming() {
+        if (mCodecManager != null) {
+            mCodecManager.cleanSurface();
+            mCodecManager.destroyCodec();
+        }
+//        if(mReceivedVideoDataListener!=null){
+//            mReceivedVideoDataListener=null;
+//        }
+//        if(videostreamPreviewSh!=null){
+//            videostreamPreviewSh=null;
+//        }
+    }
+
     private void initUi() {
         videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
 //        VideoFeeder.getInstance().setTranscodingDataRate(10.0f);
@@ -107,6 +151,9 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
 //        VideoFeeder.getInstance().setTranscodingDataRate(3.0f);
         VideoFeeder.getInstance().setTranscodingDataRate(2.0f);
         updateUIVisibility();
+
+        notifyStatusChange();
+        initPreviewerSurfaceView();
     }
 
     private void updateUIVisibility() {
@@ -197,15 +244,15 @@ public class SimpleActivity extends RosActivity implements DJICodecManager.YuvDa
 
     @Override
     public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
-        final byte[] bytes = new byte[(width+(width/2)) * height];
+        final byte[] bytes = new byte[(width + (width / 2)) * height];
         yuvFrame.get(bytes, 0, width * height);
 
         if (publisherSubscriber != null) {
-            if(index++ % 2 == 0){//skip frame logic
+            if (index++ % publisherSubscriber.skipFrameFlag == 0) {//skip frame logic
                 publisherSubscriber.publishImage(bytes, width, height);
             }
         }
-        if( index > 10000){//avoid index overflow
+        if (index > 10000) {//avoid index overflow
             index = 0;
         }
     }

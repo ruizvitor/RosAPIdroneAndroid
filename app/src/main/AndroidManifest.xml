@@ -60,6 +60,14 @@
         <service android:name="dji.sdk.sdkmanager.DJIGlobalService"></service>
         <!-- DJI SDK -->
 
+        <!-- ROS -->
+        <service android:name="com.dji.RosAPI.MyNodeMainExecutorService" >
+            <intent-filter>
+                <action android:name="com.dji.RosAPI.MyNodeMainExecutorService" />
+            </intent-filter>
+        </service>
+        <!-- ROS -->
+
         <activity
             android:name="com.dji.RosAPI.ConnectionActivity"
             android:label="@string/title_activity_connection"

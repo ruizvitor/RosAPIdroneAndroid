@@ -6,10 +6,20 @@
 
 
     <TextView
-        android:id="@+id/textView3"
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
         android:text="Activity Placeholder" />
+
+    <TextView
+        android:id="@+id/rosOnline"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="68dp"
+        android:text="ROS_MASTER_URI:" />
 
     <SurfaceView
         android:id="@+id/livestream_preview_sf"

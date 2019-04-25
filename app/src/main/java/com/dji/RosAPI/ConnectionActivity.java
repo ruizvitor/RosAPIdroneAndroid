@@ -16,6 +16,7 @@ import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,6 +32,8 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.products.Aircraft;
 import dji.sdk.sdkmanager.DJISDKManager;
 
+import static android.webkit.URLUtil.isValidUrl;
+
 public class ConnectionActivity extends Activity implements View.OnClickListener {
 
     private static final String TAG = ConnectionActivity.class.getName();
@@ -39,6 +42,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private TextView mTextProduct;
     private TextView mVersionTv;
     private Button mBtnOpen;
+    private EditText mEdit;
     private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
             Manifest.permission.VIBRATE,
             Manifest.permission.INTERNET,
@@ -58,6 +62,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
     private AtomicBoolean isRegistrationInProgress = new AtomicBoolean(false);
     private static final int REQUEST_PERMISSION_CODE = 12345;
 
+    String ip;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,6 +209,8 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
     private void initUI() {
 
+        mEdit = (EditText) findViewById(R.id.editText);
+
         mTextConnectionStatus = (TextView) findViewById(R.id.text_connection_status);
         mTextProduct = (TextView) findViewById(R.id.text_product_info);
         mBtnOpen = (Button) findViewById(R.id.btn_open);
@@ -255,7 +262,18 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
+                ip = mEdit.getText().toString();
+
+                if(ip.isEmpty() || ip.length() == 0 || ip.equals("") || ip == null || !isValidUrl(ip) )
+                {
+                    ip = "http://192.168.1.20:11311/" ;
+                }
+
+                android.util.Log.d( TAG, ip );
                 Intent intent = new Intent(this, SimpleActivity.class);
+
+                intent.putExtra("ipParam", ip);
+
                 startActivity(intent);
                 break;
             }

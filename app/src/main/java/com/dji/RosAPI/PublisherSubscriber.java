@@ -28,12 +28,21 @@ public class PublisherSubscriber extends AbstractNodeMain {
     private static final java.lang.String TAG = PublisherSubscriber.class.getName();
 
     ConnectedNode mynode;
-//    Publisher<String> publisher;
+    //    Publisher<String> publisher;
     Publisher<String> publisherCmdFlightDebug;
     Publisher<String> publisherFlightLog;
     Publisher<sensor_msgs.CompressedImage> publisherImg;
     FlightHelper flightHelper = null;
+    GimbalHelper gimbalHelper = null;
 
+    Integer compressionFlag = 90;
+    Integer skipFrameFlag = 2;
+    SimpleActivity simpleActivity = null;
+
+
+    PublisherSubscriber(SimpleActivity act) {
+        simpleActivity = act;
+    }
 
     @Override
     public GraphName getDefaultNodeName() {
@@ -53,6 +62,7 @@ public class PublisherSubscriber extends AbstractNodeMain {
         publisherImg = connectedNode.newPublisher("camera/compressed", sensor_msgs.CompressedImage._TYPE);
 
         flightHelper = new FlightHelper(publisherFlightLog, publisherCmdFlightDebug);
+        gimbalHelper = new GimbalHelper(publisherFlightLog, publisherCmdFlightDebug);
 
         subscriber.addMessageListener(new MessageListener<String>() {
             @Override
@@ -83,6 +93,47 @@ public class PublisherSubscriber extends AbstractNodeMain {
                 if (args[0].equals("startLanding")) {
                     flightHelper.startLanding(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
                 }
+
+                if (args[0].equals("gimbalRotate")) {
+                    if (args.length == 3) {
+                        gimbalHelper.rotate(gimbalHelper.cmdCallbackDefault, -1 * Float.parseFloat(args[1]), Double.parseDouble(args[2]));//implement your own cmdCallback for more advanced op
+                    } else {
+                        pubMessageGeneric(publisherCmdFlightDebug, "gimbalRotate does not have enough arguments");
+                    }
+                }
+
+                if (args[0].equals("compressionSet")) {
+                    if (args.length == 2) {
+                        compressionFlag = Integer.parseInt(args[1]);
+                    } else {
+                        pubMessageGeneric(publisherCmdFlightDebug, "compressionSet does not have enough arguments");
+                    }
+                }
+
+                if (args[0].equals("skipFrameSet")) {
+                    if (args.length == 2) {
+                        skipFrameFlag = Integer.parseInt(args[1]);
+                    } else {
+                        pubMessageGeneric(publisherCmdFlightDebug, "skipFrameSet does not have enough arguments");
+                    }
+                }
+
+//                if (args[0].equals("stream")) {
+//                    if (args.length == 2) {
+//                        if (args[1].equals("on")) {
+//                            if (simpleActivity != null) {
+//                                simpleActivity.startStreaming();
+//                            }
+//                        }
+//                        if (args[1].equals("off")) {
+//                            if (simpleActivity != null) {
+//                                simpleActivity.stopStreaming();
+//                            }
+//                        }
+//                    } else {
+//                        pubMessageGeneric(publisherCmdFlightDebug, "stream does not have enough arguments");
+//                    }
+//                }
                 //END OF IMPLEMENT Subscriber logic
             }
         });
@@ -119,7 +170,7 @@ public class PublisherSubscriber extends AbstractNodeMain {
                                     0,
                                     width,
                                     height),
-                            90,//quality
+                            compressionFlag,//quality
                             baos);
 
                     sensor_msgs.CompressedImage image = publisherImg.newMessage();

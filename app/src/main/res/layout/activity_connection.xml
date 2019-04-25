@@ -50,4 +50,27 @@
         android:textSize="15dp"
         android:id="@+id/textView2" />
 
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView2"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true"
+        android:text="@string/ROS_URL"
+        android:textSize="15dp" />
+
+    <EditText
+        android:id="@+id/editText"
+        android:layout_width="261dp"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/textView2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="53dp"
+        android:hint="@string/ip"
+        android:text="@string/ip"
+        android:inputType="textWebEmailAddress" />
+
+
 </RelativeLayout>
