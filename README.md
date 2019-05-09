@@ -18,15 +18,13 @@ This project is intended as a bridge between the DJI Mobile SDK and the Robot Op
 
 ## Getting Started
 
-Grab a released compiled apk at:
 [Releases](https://github.com/ruizvitor/RosAPIdroneAndroid/releases)
-or
 
 ```
 git clone https://github.com/ruizvitor/RosAPIdroneAndroid.git
 git clone https://github.com/ruizvitor/rosHostApi.git
 ```
-In the Android Studio:
+or compile your own apk in the Android Studio:
 * Build Project
 * Sync Project with Graddle Files
 * Run
@@ -35,29 +33,37 @@ In the Android Studio:
 In the host machine:
 * Open several terminal windows, one for the roscore, and one for each rostopic application 
 * Connect to the drone internal wifi network
-* Check your ip address using:
+* Check your wifi ip address using:
 ```
 ip address
 ```
 
+
 Illustrative layout of multiple terminal windows:
 <img src="./docs/exampleTerminal.png">
 
-* in each terminal run
+* your wifi ip on the drone internal wifi network should be used on the shell variable ROS_HOSTNAME for each bash terminal, so in each terminal run:
 ```
-export ROS_HOSTNAME=yourIPhere
+export ROS_HOSTNAME=yourHostWifiIPhere
 ```
-* in one of the terminals run 
+for example:
+```
+export ROS_HOSTNAME=192.168.1.20
+```
+* in only one of the terminals run:
 ```
 roscore
 ```
+The roscore output should show you your ROS_MASTER_URI, which will be used by the android application.
+
 In the Android device:
 
-If it is your first time launching the app, connect to a reliable wifi connection, accept the permissions, wait for the DJI registration process to finish.
+**If it is your first time launching the app, connect to a reliable wifi connection, accept the permissions, wait for the DJI registration process to finish. In case no toast message appeared, close the app and repeat. If registration has been succeeded a toast message will appear.**
 After the initial setup or in the following launches do:
 * Connect to the drone internal wifi network
 * Check if the name Phantom 3 Standard appears
-* Click the connect button
+* **Set the ROS_MASTER_URI accordingly to your roscore setup**
+* Click the Open button
 * If your wifi configuration is rightly setup and the roscore is running in the correct ip, your ROSJAVA nodes should be operational at this point already.
 * To kill the ROSJAVA nodes exit the SimpleActivity by pressing the back button
 
@@ -105,6 +111,7 @@ python listener.py
 Tested on:
 * Ubuntu 18.04.1 LTS
 * Android Marshmallow 6.0.1
+* Android Pie 9
 * DJI Phantom 3 Standard
 
 
