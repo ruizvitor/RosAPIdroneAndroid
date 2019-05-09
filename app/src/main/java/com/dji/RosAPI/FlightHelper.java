@@ -86,7 +86,7 @@ public class FlightHelper {
                     msg = msg + "velY=" + flightControllerState.getVelocityY() + " ";
                     msg = msg + "velZ=" + flightControllerState.getVelocityZ() + " ";
 
-                    android.util.Log.d(FlightLogTAG, msg);
+//                    android.util.Log.d(FlightLogTAG, msg);
 
                     pubMessage(publisherFlightLog, msg);
 

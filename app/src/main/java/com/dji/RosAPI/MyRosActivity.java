@@ -153,6 +153,7 @@ public abstract class MyRosActivity extends Activity {
         this.notificationTicker = "";
         this.notificationTitle = "";
         nodeMainExecutorServiceConnection = new MyNodeMainExecutorServiceConnection(customMasterUri);
+//        nodeMainExecutorServiceConnection = new MyNodeMainExecutorServiceConnection(URI.create("http://192.168.1.20:11311/"));
     }
 
     /**

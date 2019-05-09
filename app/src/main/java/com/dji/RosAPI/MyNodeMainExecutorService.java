@@ -67,6 +67,7 @@ public class MyNodeMainExecutorService extends Service implements NodeMainExecut
     private WifiLock wifiLock;
     private RosCore rosCore;
     private URI masterUri;
+//    private URI masterUri = URI.create("http://192.168.1.20:11311/");
     private String rosHostname;
 
     /**

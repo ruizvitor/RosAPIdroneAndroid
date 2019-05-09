@@ -10,11 +10,14 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 
+import org.ros.address.InetAddressFactory;
 import org.ros.android.RosActivity;
 import org.ros.node.NodeConfiguration;
 import org.ros.node.NodeMainExecutor;
 
+import java.math.BigInteger;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
 import dji.common.product.Model;
@@ -26,6 +29,11 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.camera.VideoFeeder;
 import dji.sdk.codec.DJICodecManager;
+
+import android.net.wifi.WifiManager;
+import android.content.Context;
+import java.net.InetAddress;
+import java.nio.ByteOrder;
 
 public class SimpleActivity extends MyRosActivity implements DJICodecManager.YuvDataCallback {
 
@@ -46,6 +54,28 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
 
     protected SimpleActivity(URI uri) {
         super(uri);
+    }
+
+
+
+    private String getLocalWifiIpAddress() {
+        WifiManager wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
+        int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
+
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            ipAddress = Integer.reverseBytes(ipAddress);
+        }
+
+        byte[] ipByteArray = BigInteger.valueOf(ipAddress).toByteArray();
+
+        String ipAddressString;
+        try {
+            ipAddressString = InetAddress.getByAddress(ipByteArray).getHostAddress();
+        } catch (UnknownHostException ex) {
+            ipAddressString = null;
+        }
+
+        return ipAddressString;
     }
 
     /**
@@ -76,7 +106,9 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
 
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
-        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
+
+        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getLocalWifiIpAddress(), URI.create(ip));
+//      NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
 
         publisherSubscriber = new PublisherSubscriber(this);
         nodeConfiguration.setNodeName("publisherSubscriber");
@@ -107,7 +139,9 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
         } else {
             mText.setText("ROS_MASTER_URI: " + ip);
         }
-
+        if (mCodecManager != null) {
+            mCodecManager.resetKeyFrame();
+        }
 //        notifyStatusChange();
 //        initPreviewerSurfaceView();
     }
@@ -118,31 +152,38 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
         if (mCodecManager != null) {
             mCodecManager.cleanSurface();
             mCodecManager.destroyCodec();
+            mCodecManager = null;
         }
         super.onDestroy();
     }
 
-    public void startStreaming() {
-//        setContentView(R.layout.activity_mix);
-//        initUi();
-//        notifyStatusChange();
+    public void refreshStreaming() {
+            if (mCodecManager != null) {
+                mCodecManager.resetKeyFrame();
+            }
+    }
+
+//    public void startStreaming() {
+////        setContentView(R.layout.activity_mix);
+////        initUi();
+////        notifyStatusChange();
+////        initPreviewerSurfaceView();
+//
 //        initPreviewerSurfaceView();
-
-        initPreviewerSurfaceView();
-    }
-
-    public void stopStreaming() {
-        if (mCodecManager != null) {
-            mCodecManager.cleanSurface();
-            mCodecManager.destroyCodec();
-        }
-//        if(mReceivedVideoDataListener!=null){
-//            mReceivedVideoDataListener=null;
+//    }
+//
+//    public void stopStreaming() {
+//        if (mCodecManager != null) {
+//            mCodecManager.cleanSurface();
+//            mCodecManager.destroyCodec();
 //        }
-//        if(videostreamPreviewSh!=null){
-//            videostreamPreviewSh=null;
-//        }
-    }
+////        if(mReceivedVideoDataListener!=null){
+////            mReceivedVideoDataListener=null;
+////        }
+////        if(videostreamPreviewSh!=null){
+////            videostreamPreviewSh=null;
+////        }
+//    }
 
     private void initUi() {
         videostreamPreviewSf = (SurfaceView) findViewById(R.id.livestream_preview_sf);
@@ -214,9 +255,10 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
 
             @Override
             public void onReceive(byte[] videoBuffer, int size) {
-                if (mCodecManager != null) {
+                if (mCodecManager != null && size>0) {
                     mCodecManager.sendDataToDecoder(videoBuffer, size);
                 }
+//                mCodecManager.sendDataToDecoder(videoBuffer, size);
             }
         };
 
@@ -244,17 +286,19 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
 
     @Override
     public void onYuvDataReceived(ByteBuffer yuvFrame, int dataSize, final int width, final int height) {
-        final byte[] bytes = new byte[(width + (width / 2)) * height];
-        yuvFrame.get(bytes, 0, width * height);
 
+//        Log.d(TAG, "GOT FRAME!!!" );
         if (publisherSubscriber != null) {
+            final byte[] bytes = new byte[(width + (width / 2)) * height];
+            yuvFrame.get(bytes, 0, width * height);
             if (index++ % publisherSubscriber.skipFrameFlag == 0) {//skip frame logic
                 publisherSubscriber.publishImage(bytes, width, height);
             }
+            if (index > 10000) {//avoid index overflow
+                index = 0;
+            }
         }
-        if (index > 10000) {//avoid index overflow
-            index = 0;
-        }
+
     }
 
 }

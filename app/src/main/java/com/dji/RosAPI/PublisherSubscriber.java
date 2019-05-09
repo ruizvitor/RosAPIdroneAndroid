@@ -118,6 +118,13 @@ public class PublisherSubscriber extends AbstractNodeMain {
                     }
                 }
 
+                if (args[0].equals("cameraRefresh")) {
+                    if (simpleActivity != null) {
+                        simpleActivity.refreshStreaming();
+                    }
+                }
+
+
 //                if (args[0].equals("stream")) {
 //                    if (args.length == 2) {
 //                        if (args[1].equals("on")) {
@@ -127,6 +134,8 @@ public class PublisherSubscriber extends AbstractNodeMain {
 //                        }
 //                        if (args[1].equals("off")) {
 //                            if (simpleActivity != null) {
+//                                simpleActivity.stopStreaming();
+//                            }if (simpleActivity != null) {
 //                                simpleActivity.stopStreaming();
 //                            }
 //                        }
