@@ -7,7 +7,7 @@ This project is intended as a bridge between the DJI Mobile SDK and the Robot Op
 ## Necessary Software:
 * Python 2.7
 * [Ros melodic](http://wiki.ros.org/melodic)
-* [Rospy](http://wiki.ros.org/rospy)
+* [Rospy](http://wiki.ros.org/rospy) "sudo apt-get install python-rospy"
 * Android Studio
 * [Numpy](http://www.numpy.org/) #Optional, only necessary for image streaming
 * [OpenCV 2](https://opencv.org/) #Optional, only necessary for image streaming
