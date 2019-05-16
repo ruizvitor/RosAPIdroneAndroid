@@ -100,6 +100,10 @@ or
 ```
 python listener.py 
 ```
+# Known Issues:
+"Mobile SDK 4.7 and later versions are incompatible with x86 devices: Since v4.7, Mobile
+SDK has included FFMpeg lib to provide the transcoded video feed, but FFMpeg x86 so files will lead
+to the runtime crash when the target API of APP is larger than 23(included)." [See DJI Mobile SDK release notes](https://developer.dji.com/mobile-sdk/downloads/)
 
 # Useful Links:
 
