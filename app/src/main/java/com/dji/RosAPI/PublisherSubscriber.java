@@ -19,6 +19,10 @@ import org.ros.node.topic.Subscriber;
 
 import java.io.ByteArrayOutputStream;
 
+import dji.common.airlink.ChannelSelectionMode;
+import dji.common.error.DJIError;
+import dji.common.util.CommonCallbacks;
+import dji.sdk.airlink.LightbridgeLink;
 import std_msgs.String;
 
 import static org.jboss.netty.buffer.ChannelBuffers.copiedBuffer;
@@ -77,6 +81,15 @@ public class PublisherSubscriber extends AbstractNodeMain {
                 if (args[0].equals("initVirtualControl")) {
                     flightHelper.initVirtualControl(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
                 }
+                if (args[0].equals("setVirtualControl")) {
+
+                    if (args.length == 4) {
+                        flightHelper.setVirtualControl(flightHelper.cmdCallbackDefault, args[1], args[2], args[3]);//implement your own cmdCallback for more advanced op
+                    } else {
+                        pubMessageGeneric(publisherCmdFlightDebug, "setVirtualControl does not have enough arguments");
+                    }
+
+                }
                 if (args[0].equals("startTakeOff")) {
                     flightHelper.startTakeOff(flightHelper.cmdCallbackDefault);//implement your own cmdCallback for more advanced op
                 }
@@ -123,7 +136,6 @@ public class PublisherSubscriber extends AbstractNodeMain {
                         simpleActivity.refreshStreaming();
                     }
                 }
-
 
 //                if (args[0].equals("stream")) {
 //                    if (args.length == 2) {

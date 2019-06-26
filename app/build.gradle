@@ -1,11 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 26
     defaultConfig {
         applicationId "com.dji.RosAPI"
         minSdkVersion 19
-        targetSdkVersion 28
+        targetSdkVersion 26
         versionCode 1
         versionName "1.0"
         multiDexEnabled true
@@ -36,18 +36,6 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation('com.dji:dji-sdk:4.9')
     compileOnly('com.dji:dji-sdk-provided:4.9')
-
-//    implementation('com.dji:dji-sdk:4.8.1')
-//    compileOnly('com.dji:dji-sdk-provided:4.8.1')
-
-//    implementation('com.dji:dji-sdk:4.8')
-//    compileOnly('com.dji:dji-sdk-provided:4.8')
-
-//    implementation 'com.android.support:support-v4:27.0.0'
-//    implementation 'com.android.support:appcompat-v7:27.1.1'
-
-//    implementation 'org.ros.android_core:android_10:[0.3,0.4)'
-//    implementation 'org.ros.android_core:android_15:[0.3,0.4)'
 
     implementation 'org.ros.android_core:android_10:0.3.3'
     implementation 'org.ros.android_core:android_15:0.3.3'

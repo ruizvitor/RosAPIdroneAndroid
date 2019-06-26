@@ -77,15 +77,16 @@ public class FlightHelper {
                 public void onUpdate(@NonNull FlightControllerState flightControllerState) {
                     Attitude attitude = flightControllerState.getAttitude();
 
-                    java.lang.String msg = "";
+                    java.lang.String msg = "{";
 
-                    msg = msg + "roll=" + attitude.roll + " ";
-                    msg = msg + "pitch=" + attitude.pitch + " ";
-                    msg = msg + "yaw=" + attitude.yaw + " ";
-                    msg = msg + "velX=" + flightControllerState.getVelocityX() + " ";
-                    msg = msg + "velY=" + flightControllerState.getVelocityY() + " ";
-                    msg = msg + "velZ=" + flightControllerState.getVelocityZ() + " ";
+                    msg = msg + "\"roll\":\"" + attitude.roll + "\", ";
+                    msg = msg + "\"pitch\":\"" + attitude.pitch + "\", ";
+                    msg = msg + "\"yaw\":\"" + attitude.yaw + "\", ";
+                    msg = msg + "\"velX\":\"" + flightControllerState.getVelocityX() + "\", ";
+                    msg = msg + "\"velY\":\"" + flightControllerState.getVelocityY() + "\", ";
+                    msg = msg + "\"velZ\":\"" + flightControllerState.getVelocityZ() + "\" ";
 
+                    msg = msg + "}";
 //                    android.util.Log.d(FlightLogTAG, msg);
 
                     pubMessage(publisherFlightLog, msg);
@@ -142,11 +143,54 @@ public class FlightHelper {
 
                     flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);//set to m/s
                     flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);//set to degrees/s
-
-                    //flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);//set to degrees
-
                     flightController.setVerticalControlMode(VerticalControlMode.POSITION);//set m to ground
 
+
+                    cmdCallback.onCompleted(true);
+                } else {
+                    android.util.Log.e(TAG, error.getDescription());
+                    pubMessage(publisherCmdFlightDebug, error.getDescription());
+                    cmdCallback.onCompleted(false);
+                }
+
+            }
+        });
+
+    }
+
+    void setVirtualControl(final CmdCallback cmdCallback, final java.lang.String rollPitchMode, final java.lang.String yawMode, final java.lang.String verticalMode) {
+
+        flightController.setVirtualStickModeEnabled(true, new CommonCallbacks.CompletionCallback() {
+            @Override
+            public void onResult(DJIError error) {
+
+                if (error == null) {
+
+                    flightController.setRollPitchCoordinateSystem(FlightCoordinateSystem.BODY);//set flight relative to body frame
+
+                    if(rollPitchMode.equals("velocity")){
+                        flightController.setRollPitchControlMode(RollPitchControlMode.VELOCITY);//set to m/s
+                    }
+                    if(rollPitchMode.equals("degree")){
+                        flightController.setRollPitchControlMode(RollPitchControlMode.ANGLE);//set to degrees
+                    }
+
+                    if(yawMode.equals("angular")){
+                        flightController.setYawControlMode(YawControlMode.ANGULAR_VELOCITY);//set to degrees/s
+                    }
+                    if(yawMode.equals("angle")){
+                        flightController.setYawControlMode(YawControlMode.ANGLE);//set to degrees relative to compass North
+                    }
+
+                    if(verticalMode.equals("position")){
+                        flightController.setVerticalControlMode(VerticalControlMode.POSITION);//set m to ground
+                    }
+                    if(verticalMode.equals("velocity")){
+                        flightController.setVerticalControlMode(VerticalControlMode.VELOCITY);//set m/s to ground
+                    }
+
+                    android.util.Log.d(TAG, "setVirtualStickModeEnabled "+rollPitchMode+" "+yawMode+" "+verticalMode+" true successful");
+                    pubMessage(publisherCmdFlightDebug, "setVirtualStickModeEnabled "+rollPitchMode+" "+yawMode+" "+verticalMode+" true successful");
 
                     cmdCallback.onCompleted(true);
                 } else {

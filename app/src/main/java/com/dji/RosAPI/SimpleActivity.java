@@ -59,7 +59,7 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
 
 
     private String getLocalWifiIpAddress() {
-        WifiManager wifiManager = (WifiManager) this.getSystemService(WIFI_SERVICE);
+        WifiManager wifiManager = (WifiManager) this.getApplicationContext().getSystemService(WIFI_SERVICE);
         int ipAddress = wifiManager.getConnectionInfo().getIpAddress();
 
         if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
@@ -107,8 +107,8 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
     @Override
     protected void init(NodeMainExecutor nodeMainExecutor) {
 
-        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getLocalWifiIpAddress(), URI.create(ip));
-//      NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
+//        NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getLocalWifiIpAddress(), URI.create(ip));
+      NodeConfiguration nodeConfiguration = NodeConfiguration.newPublic(getRosHostname(), getMasterUri());
 
         publisherSubscriber = new PublisherSubscriber(this);
         nodeConfiguration.setNodeName("publisherSubscriber");
@@ -209,10 +209,10 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
         surfaceCallback = new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                Log.d(TAG, "real onSurfaceTextureAvailable");
+//                Log.d(TAG, "real onSurfaceTextureAvailable");
                 videoViewWidth = videostreamPreviewSf.getWidth();
                 videoViewHeight = videostreamPreviewSf.getHeight();
-                Log.d(TAG, "real onSurfaceTextureAvailable3: width " + videoViewWidth + " height " + videoViewHeight);
+//                Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight);
 
                 if (mCodecManager == null) {
                     mCodecManager = new DJICodecManager(getApplicationContext(), holder, videoViewWidth,
@@ -227,7 +227,7 @@ public class SimpleActivity extends MyRosActivity implements DJICodecManager.Yuv
             public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
                 videoViewWidth = width;
                 videoViewHeight = height;
-                Log.d(TAG, "real onSurfaceTextureAvailable4: width " + videoViewWidth + " height " + videoViewHeight);
+//                Log.d(TAG, "real onSurfaceTextureAvailable: width " + videoViewWidth + " height " + videoViewHeight);
             }
 
             @Override

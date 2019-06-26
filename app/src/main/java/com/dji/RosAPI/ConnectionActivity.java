@@ -137,7 +137,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
                                 DJISDKManager.getInstance().startConnectionToProduct();
 //                                showToast("Register Success");
                             } else {
-//                                showToast("Register sdk fails, check network is available");
+                                showToast("Register sdk fails, check network is available");
                             }
                             Log.v(TAG, djiError.getDescription());
                         }
@@ -219,7 +219,7 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
 
         mVersionTv = (TextView) findViewById(R.id.textView2);
-        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion()));
+        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion())+" RosAPI v0.0.5-alpha");
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
