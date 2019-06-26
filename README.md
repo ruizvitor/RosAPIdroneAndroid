@@ -6,8 +6,8 @@ This project is intended as a bridge between the DJI Mobile SDK and the Robot Op
 
 ## Necessary Software:
 * Python 2.7
-* [Ros melodic](http://wiki.ros.org/melodic)
-* [Rospy](http://wiki.ros.org/rospy)
+* [Ros melodic](http://wiki.ros.org/melodic) [How to Install In Ubuntu](http://wiki.ros.org/melodic/Installation/Ubuntu#Installation)
+* [Rospy](http://wiki.ros.org/rospy) "sudo apt-get install python-rospy"
 * Android Studio
 * [Numpy](http://www.numpy.org/) #Optional, only necessary for image streaming
 * [OpenCV 2](https://opencv.org/) #Optional, only necessary for image streaming
@@ -100,6 +100,10 @@ or
 ```
 python listener.py 
 ```
+# Known Issues:
+"Mobile SDK 4.7 and later versions are incompatible with x86 devices: Since v4.7, Mobile
+SDK has included FFMpeg lib to provide the transcoded video feed, but FFMpeg x86 so files will lead
+to the runtime crash when the target API of APP is larger than 23(included)." [See DJI Mobile SDK release notes](https://developer.dji.com/mobile-sdk/downloads/)
 
 # Useful Links:
 
