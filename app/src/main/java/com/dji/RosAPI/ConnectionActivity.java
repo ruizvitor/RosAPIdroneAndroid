@@ -30,7 +30,9 @@ import dji.log.DJILog;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.products.Aircraft;
+import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
+import dji.sdk.sdkmanager.LiveStreamManager;
 
 import static android.webkit.URLUtil.isValidUrl;
 
@@ -123,64 +125,141 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         }
     }
 
+    private void notifyStatusChange() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                refreshSDKRelativeUI();
+            }
+        });
+
+    }
+
     private void startSDKRegistration() {
         if (isRegistrationInProgress.compareAndSet(false, true)) {
             AsyncTask.execute(new Runnable() {
                 @Override
                 public void run() {
-//                    showToast("registering, pls wait...");
-                    DJISDKManager.getInstance().registerApp(getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
+                    DJISDKManager.getInstance().registerApp(ConnectionActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
                         @Override
                         public void onRegister(DJIError djiError) {
                             if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                                 DJILog.e("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
                                 DJISDKManager.getInstance().startConnectionToProduct();
-//                                showToast("Register Success");
+                                showToast("Register SDK Success");
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        loginDJIUserAccount();
+//                                    }
+//                                });
                             } else {
                                 showToast("Register sdk fails, check network is available");
                             }
                             Log.v(TAG, djiError.getDescription());
+                            isRegistrationInProgress.set(false);
                         }
 
                         @Override
                         public void onProductDisconnect() {
-                            Log.d(TAG, "onProductDisconnect");
-//                            showToast("Product Disconnected");
-
+                            showToast("Product Disconnected");
+                            notifyStatusChange();
                         }
-
                         @Override
                         public void onProductConnect(BaseProduct baseProduct) {
-                            Log.d(TAG, String.format("onProductConnect newProduct:%s", baseProduct));
-//                            showToast("Product Connected");
-
+                            notifyStatusChange();
+                            isRegistrationInProgress.set(false);
+                            if (baseProduct != null) {
+                                RosAPIApplication.updateProduct(baseProduct);
+                            }
                         }
-
                         @Override
-                        public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
+                        public void onComponentChange(BaseProduct.ComponentKey componentKey,
+                                                      BaseComponent oldComponent,
                                                       BaseComponent newComponent) {
-
+                            if (newComponent != null && oldComponent == null) {
+                                Log.v(TAG,componentKey.name() + " Component Found index:" + newComponent.getIndex());
+                            }
                             if (newComponent != null) {
                                 newComponent.setComponentListener(new BaseComponent.ComponentListener() {
-
                                     @Override
-                                    public void onConnectivityChange(boolean isConnected) {
-                                        Log.d(TAG, "onComponentConnectivityChanged: " + isConnected);
+                                    public void onConnectivityChange(boolean b) {
+                                        Log.v(TAG," Component " + (b?"connected":"disconnected"));
+                                        notifyStatusChange();
                                     }
                                 });
                             }
-                            Log.d(TAG,
-                                    String.format("onComponentChange key:%s, oldComponent:%s, newComponent:%s",
-                                            componentKey,
-                                            oldComponent,
-                                            newComponent));
+                            notifyStatusChange();
+                        }
 
+                        @Override
+                        public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
+                            //notify the init progress
                         }
                     });
                 }
             });
         }
     }
+//
+//    private void startSDKRegistration() {
+//        if (isRegistrationInProgress.compareAndSet(false, true)) {
+//            AsyncTask.execute(new Runnable() {
+//                @Override
+//                public void run() {
+////                    showToast("registering, pls wait...");
+//                    DJISDKManager.getInstance().registerApp(ConnectionActivity.this.getApplicationContext(), new DJISDKManager.SDKManagerCallback() {
+//                        @Override
+//                        public void onRegister(DJIError djiError) {
+//                            if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
+//                                DJILog.e("App registration", DJISDKError.REGISTRATION_SUCCESS.getDescription());
+//                                DJISDKManager.getInstance().startConnectionToProduct();
+////                                showToast("Register Success");
+//                            } else {
+//                                showToast("Register sdk fails, check network is available");
+//                            }
+//                            Log.v(TAG, djiError.getDescription());
+//                        }
+//
+//                        @Override
+//                        public void onProductDisconnect() {
+//                            Log.d(TAG, "onProductDisconnect");
+////                            showToast("Product Disconnected");
+//
+//                        }
+//
+//                        @Override
+//                        public void onProductConnect(BaseProduct baseProduct) {
+//                            Log.d(TAG, String.format("onProductConnect newProduct:%s", baseProduct));
+////                            showToast("Product Connected");
+//
+//                        }
+//
+//                        @Override
+//                        public void onComponentChange(BaseProduct.ComponentKey componentKey, BaseComponent oldComponent,
+//                                                      BaseComponent newComponent) {
+//
+//                            if (newComponent != null) {
+//                                newComponent.setComponentListener(new BaseComponent.ComponentListener() {
+//
+//                                    @Override
+//                                    public void onConnectivityChange(boolean isConnected) {
+//                                        Log.d(TAG, "onComponentConnectivityChanged: " + isConnected);
+//                                    }
+//                                });
+//                            }
+//                            Log.d(TAG,
+//                                    String.format("onComponentChange key:%s, oldComponent:%s, newComponent:%s",
+//                                            componentKey,
+//                                            oldComponent,
+//                                            newComponent));
+//
+//                        }
+//                    });
+//                }
+//            });
+//        }
+//    }
 
     @Override
     public void onResume() {
@@ -219,7 +298,11 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
 
         mVersionTv = (TextView) findViewById(R.id.textView2);
-        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion())+" RosAPI v0.0.5-alpha");
+        mVersionTv.setText(getResources().getString(R.string.sdk_version, DJISDKManager.getInstance().getSDKVersion())+" RosAPI v0.0.6-alpha");
+
+        if(mTextProduct.getText().toString().equals("Phantom 3 Standard")){
+            intentProcedure();
+        }
     }
 
     protected BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -243,6 +326,10 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
 
             if (null != mProduct.getModel()) {
                 mTextProduct.setText("" + mProduct.getModel().getDisplayName());
+//                Log.d(TAG,"LOOK!="+mTextProduct.getText().toString());
+                if(mTextProduct.getText().toString().equals("Phantom 3 Standard")){
+                    intentProcedure();
+                }
             } else {
                 mTextProduct.setText(R.string.product_information);
             }
@@ -262,24 +349,30 @@ public class ConnectionActivity extends Activity implements View.OnClickListener
         switch (v.getId()) {
 
             case R.id.btn_open: {
-                ip = mEdit.getText().toString();
-
-                if(ip.isEmpty() || ip.length() == 0 || ip.equals("") || ip == null || !isValidUrl(ip) )
-                {
-                    ip = "http://192.168.1.20:11311/" ;
-                }
-
-                android.util.Log.d( TAG, ip );
-                Intent intent = new Intent(this, SimpleActivity.class);
-
-                intent.putExtra("ipParam", ip);
-
-                startActivity(intent);
+                intentProcedure();
                 break;
             }
             default:
                 break;
         }
+    }
+
+    void intentProcedure(){
+        ip = mEdit.getText().toString();
+
+        if(ip.isEmpty() || ip.length() == 0 || ip.equals("") || ip == null || !isValidUrl(ip) )
+        {
+            ip = "http://192.168.1.20:11311/" ;
+        }
+
+        android.util.Log.d( TAG, ip );
+//                Intent intent = new Intent(this, SimpleActivity.class);
+        Intent intent = new Intent(this, SimpleActivity.class);
+//                Intent intent = new Intent(this, LiveStreamView.class);
+
+        intent.putExtra("ipParam", ip);
+
+        startActivity(intent);
     }
 
     private void showToast(final String toastMsg) {

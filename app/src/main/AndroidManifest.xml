@@ -43,7 +43,7 @@
 
         <meta-data
             android:name="com.dji.sdk.API_KEY"
-            android:value="Please enter your DJI Developer App Key here."/>
+            android:value="dedbb3f26844e6b82d013a06" />
 
         <activity
             android:name="dji.sdk.sdkmanager.DJIAoaControllerActivity"
@@ -75,6 +75,8 @@
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>

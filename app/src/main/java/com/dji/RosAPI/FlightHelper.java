@@ -12,6 +12,7 @@ import dji.common.error.DJIError;
 import dji.common.flightcontroller.Attitude;
 import dji.common.flightcontroller.ControlMode;
 import dji.common.flightcontroller.FlightControllerState;
+import dji.common.flightcontroller.LocationCoordinate3D;
 import dji.common.flightcontroller.virtualstick.FlightControlData;
 import dji.common.flightcontroller.virtualstick.FlightCoordinateSystem;
 import dji.common.flightcontroller.virtualstick.RollPitchControlMode;
@@ -77,6 +78,8 @@ public class FlightHelper {
                 public void onUpdate(@NonNull FlightControllerState flightControllerState) {
                     Attitude attitude = flightControllerState.getAttitude();
 
+                    LocationCoordinate3D locationCoordinate3D = flightControllerState.getAircraftLocation();
+
                     java.lang.String msg = "{";
 
                     msg = msg + "\"roll\":\"" + attitude.roll + "\", ";
@@ -84,7 +87,11 @@ public class FlightHelper {
                     msg = msg + "\"yaw\":\"" + attitude.yaw + "\", ";
                     msg = msg + "\"velX\":\"" + flightControllerState.getVelocityX() + "\", ";
                     msg = msg + "\"velY\":\"" + flightControllerState.getVelocityY() + "\", ";
-                    msg = msg + "\"velZ\":\"" + flightControllerState.getVelocityZ() + "\" ";
+                    msg = msg + "\"velZ\":\"" + flightControllerState.getVelocityZ() + "\", ";
+
+                    msg = msg + "\"lat\":\"" + locationCoordinate3D.getLatitude() + "\", ";
+                    msg = msg + "\"long\":\"" + locationCoordinate3D.getLongitude() + "\", ";
+                    msg = msg + "\"altitude\":\"" + locationCoordinate3D.getAltitude() + "\" ";
 
                     msg = msg + "}";
 //                    android.util.Log.d(FlightLogTAG, msg);

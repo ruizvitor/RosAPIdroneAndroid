@@ -17,6 +17,7 @@ import dji.sdk.base.BaseProduct;
 import dji.sdk.camera.Camera;
 import dji.sdk.products.Aircraft;
 import dji.sdk.products.HandHeld;
+import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 public class RosAPIApplication extends Application {
@@ -40,6 +41,9 @@ public class RosAPIApplication extends Application {
 
     public RosAPIApplication() {
 
+    }
+    public static synchronized void updateProduct(BaseProduct product) {
+        mProduct = product;
     }
 
     /**
@@ -106,6 +110,10 @@ public class RosAPIApplication extends Application {
 
                 }
                 Log.e("TAG", djiError.toString());
+            }
+            @Override
+            public void onInitProcess(DJISDKInitEvent djisdkInitEvent, int i) {
+                //notify the init progress
             }
 
             @Override
