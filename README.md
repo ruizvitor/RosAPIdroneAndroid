@@ -1,4 +1,7 @@
 # Ros API drone Android
+
+Featured at the paper [For the Thrill of it All: A bridge among Linux, Robot Operating System, Android and Unmanned Aerial Vehicles](https://arxiv.org/abs/2006.11656).
+
 This project is intended as a bridge between the DJI Mobile SDK and the Robot Operating System(ROS), allowing broader use of the DJI Phantom 3 Standard drone capabilities.
 <p align="center">
 <img src="./docs/RosAPI.svg">
@@ -100,6 +103,25 @@ or
 ```
 python listener.py 
 ```
+
+
+### CITATION:
+If you found this code useful for your research, please cite:
+```
+@misc{ruiz2020thrill,
+    title={For the Thrill of it All: A bridge among Linux, Robot Operating System, Android and Unmanned Aerial Vehicles},
+    author={Daniel V. Ruiz and Leonardo A. Vidal and Eduardo Todt},
+    year={2020},
+    eprint={2006.11656},
+    archivePrefix={arXiv},
+    primaryClass={eess.SP}
+}
+```
+
+### DISCLAIMER:
+
+- This is a research code, so compatibility issues might happen.
+
 # Known Issues:
 "Mobile SDK 4.7 and later versions are incompatible with x86 devices: Since v4.7, Mobile
 SDK has included FFMpeg lib to provide the transcoded video feed, but FFMpeg x86 so files will lead
